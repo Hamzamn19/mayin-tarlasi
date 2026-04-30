@@ -5,3 +5,12 @@ EDA.tar.xz
 *.tar.xz
 yolo_dataset
 yolo_dataset.zip
+landmine_flat
+runs
+*.csv
+*.pt
+*.pkl
+*.onnx
+*.engine
+results/
+__pycache__/

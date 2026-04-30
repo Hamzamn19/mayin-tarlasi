@@ -1,0 +1,59 @@
+import os
+import yaml
+from ultralytics import YOLO
+
+# 1. إعداد المسارات الصحيحة (بناءً على بنية Kaggle Linux)
+# تم تصحيح المسار ليتوافق مع الصورة المرفقة
+INPUT_DIR = '/kaggle/input/high-resolution-multi-class-landmine-dataset/yolo_dataset'
+ORIGINAL_YAML = os.path.join(INPUT_DIR, 'data.yaml')
+KAGGLE_YAML = '/kaggle/working/landmine_kaggle.yaml'
+
+# التأكد من وجود المجلدات لتجنب FileNotFoundError
+if not os.path.exists(ORIGINAL_YAML):
+    # محاولة مسار بديل إذا كان الاسم يحتوي على اسم المستخدم
+    INPUT_DIR = '/kaggle/input/datasets/hamzahshal/high-resolution-multi-class-landmine-dataset/yolo_dataset'
+    ORIGINAL_YAML = os.path.join(INPUT_DIR, 'data.yaml')
+
+# 2. تعديل ملف data.yaml برمجياً
+print(f"Reading configuration from: {ORIGINAL_YAML}")
+try:
+    with open(ORIGINAL_YAML, 'r') as f:
+        config = yaml.safe_load(f)
+
+    # إعادة ضبط المسارات لتكون مطلقة لضمان استقرار التدريب في Linux
+    config['path'] = INPUT_DIR  # المجلد الجذر للبيانات
+    config['train'] = 'images/train'
+    config['val'] = 'images/val'
+    config['test'] = 'images/test'
+
+    with open(KAGGLE_YAML, 'w') as f:
+        yaml.dump(config, f)
+    print("Success: landmine_kaggle.yaml has been created.")
+except Exception as e:
+    print(f"Error updating YAML: {e}")
+    exit()
+
+# 3. تحميل نموذج YOLO26
+print("Loading YOLO26 Model...")
+model = YOLO('yolo26s.pt') 
+
+# 4. بدء التدريب
+# تم ضبط المعاملات لتحقيق أقصى استفادة من T4 GPU مع مراعاة الـ Edge Cases
+results = model.train(     
+    data=KAGGLE_YAML,
+    epochs=50,          
+    imgsz=640,          
+    batch=32,            
+    device=0,           
+    patience=15,        
+    project='Landmine_Detection_2026',
+    name='YOLO26_S_Standard',
+    save=True,
+    exist_ok=True,      # لتجنب الخطأ في حال إعادة التشغيل
+    workers=4           # استغلال تعدد الأنوية في Linux لتسريع تحميل البيانات
+)
+
+print("\n" + "="*50)
+print("Training Complete!")
+print(f"Check results at: /kaggle/working/Landmine_Detection_2026/YOLO26_S_Standard/")
+print("="*50)
