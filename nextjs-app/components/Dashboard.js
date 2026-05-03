@@ -435,12 +435,68 @@ export default function Dashboard() {
                 <div style={{ padding: '0' }}>
                 {activeBox ? (
                   <div className="details">
-                    <div className="card" style={{ marginBottom: '16px', overflow: 'hidden' }}>
-                      <div className="crop-preview">
-                        <img src={activeBox.cropDataUrl} style={{ width: '100%', maxHeight: '200px', objectFit: 'cover', imageRendering: 'pixelated' }} />
+                    {/* PROFESSIONAL DETECTION CARD */}
+                    <div className="card" style={{ 
+                      marginBottom: '20px', 
+                      overflow: 'hidden', 
+                      border: '1px solid var(--accent)',
+                      background: 'linear-gradient(180deg, #020617, #0f172a)',
+                      boxShadow: '0 10px 30px rgba(37, 99, 235, 0.15)'
+                    }}>
+                      <div className="crop-preview" style={{ 
+                        position: 'relative',
+                        background: '#000', 
+                        height: '220px', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        borderBottom: '1px solid rgba(37, 99, 235, 0.3)'
+                      }}>
+                        {/* DIGITAL CROSSHAIR OVERLAY */}
+                        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+                           <div style={{ position: 'absolute', top: '50%', left: '10%', right: '10%', height: '1px', background: 'rgba(37, 99, 235, 0.3)' }} />
+                           <div style={{ position: 'absolute', left: '50%', top: '10%', bottom: '10%', width: '1px', background: 'rgba(37, 99, 235, 0.3)' }} />
+                           <div style={{ position: 'absolute', top: 10, left: 10, width: 10, height: 10, borderLeft: '2px solid var(--accent)', borderTop: '2px solid var(--accent)' }} />
+                           <div style={{ position: 'absolute', top: 10, right: 10, width: 10, height: 10, borderRight: '2px solid var(--accent)', borderTop: '2px solid var(--accent)' }} />
+                           <div style={{ position: 'absolute', bottom: 10, left: 10, width: 10, height: 10, borderLeft: '2px solid var(--accent)', borderBottom: '2px solid var(--accent)' }} />
+                           <div style={{ position: 'absolute', bottom: 10, right: 10, width: 10, height: 10, borderRight: '2px solid var(--accent)', borderBottom: '2px solid var(--accent)' }} />
+                        </div>
+
+                        <img 
+                          src={activeBox.cropDataUrl} 
+                          style={{ 
+                            maxHeight: '90%', 
+                            maxWidth: '90%', 
+                            objectFit: 'contain',
+                            boxShadow: '0 0 20px rgba(255,255,255,0.1)'
+                          }} 
+                        />
+                        
+                        <div style={{ 
+                          position: 'absolute', 
+                          bottom: 8, 
+                          right: 12, 
+                          fontSize: '9px', 
+                          fontFamily: 'monospace', 
+                          color: 'var(--accent)',
+                          textTransform: 'uppercase',
+                          letterSpacing: '1px'
+                        }}>
+                          Zoom: 4.0x
+                        </div>
                       </div>
-                      <div style={{ padding: '12px' }}>
-                        <div className="badge">Selected: Detection #{activeBox.id}</div>
+
+                      <div style={{ padding: '14px', background: 'rgba(37, 99, 235, 0.03)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                           <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                             ID: <span style={{ color: 'var(--accent)' }}>MINE_ALPHA_{activeBox.id}</span>
+                           </span>
+                           <span className="badge" style={{ fontSize: '9px', padding: '2px 8px' }}>Active ROI</span>
+                        </div>
+                        <div style={{ marginTop: '8px', fontSize: '11px', color: 'var(--muted)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px' }}>
+                           <div>COORD_X: {activeBox.x1.toFixed(1)}</div>
+                           <div>COORD_Y: {activeBox.y1.toFixed(1)}</div>
+                        </div>
                       </div>
                     </div>
 
