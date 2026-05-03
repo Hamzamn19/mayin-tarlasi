@@ -1,5 +1,6 @@
 'use client';
 
+import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { featureKeys, imageMeta as fallbackMeta, sampleDetections, stages } from './sampleData';
 
@@ -209,8 +210,8 @@ export default function Dashboard() {
     try {
       const result = await analyzeFile(file);
       setAnalysis(result);
-      setActiveBox(result.detections[0] || null);
-      setStage(4);
+      if (result.detections.length > 0) setActiveBox(result.detections[0]);
+      setStage(1);
     } catch (exception) {
       setError(exception?.message || 'Failed to process image');
       setAnalysis(initialAnalysis());
@@ -274,13 +275,6 @@ export default function Dashboard() {
           
           {stage === 1 && (
             <section className="panel" style={{ flex: 1, width: '100%', overflow: 'hidden', padding: '0px', border: 'none', background: 'transparent', boxShadow: 'none' }}>
-              <div className="panel-title" style={{ padding: '12px 0', marginBottom: '0' }}>
-                <div>
-                  <h3 style={{ fontSize: '1.2rem', margin: 0 }}>{currentStage.title}</h3>
-                  <p style={{ fontSize: '0.9rem', margin: 0 }}>{currentStage.subtitle}</p>
-                </div>
-                <span className="badge" style={{ padding: '4px 12px', fontSize: '0.8rem' }}>S{stage}</span>
-              </div>
               <div className="panel-scroll" style={{ overflow: 'auto', display: 'flex', flexDirection: 'column' }}>
                 <div className="hero-grid" style={{ gridTemplateColumns: '1fr', padding: '16px 0' }}>
                   <div className="upload-box card" style={{ padding: '16px' }}>
@@ -313,13 +307,6 @@ export default function Dashboard() {
 
           {stage === 2 && (
              <section className="panel" style={{ flex: 1, width: '100%', overflow: 'hidden', padding: '0px', border: 'none', background: 'transparent', boxShadow: 'none' }}>
-                <div className="panel-title" style={{ padding: '12px 0', marginBottom: '0' }}>
-                  <div>
-                    <h3 style={{ fontSize: '1.2rem', margin: 0 }}>{currentStage.title}</h3>
-                    <p style={{ fontSize: '0.9rem', margin: 0 }}>{currentStage.subtitle}</p>
-                  </div>
-                  <span className="badge" style={{ padding: '4px 12px', fontSize: '0.8rem' }}>S{stage}</span>
-                </div>
                 <div className="grid-2" style={{ padding: '16px 0' }}>
                   <div className="panel">
                     <div className="panel-title"><h3 style={{ fontSize: '1rem' }}>Original Frame</h3></div>
@@ -339,21 +326,74 @@ export default function Dashboard() {
 
           {stage === 3 && (
              <section className="panel" style={{ flex: 1, width: '100%', overflow: 'hidden', padding: '0px', border: 'none', background: 'transparent', boxShadow: 'none' }}>
-                <div className="panel-title" style={{ padding: '12px 0', marginBottom: '0' }}>
-                  <div>
-                    <h3 style={{ fontSize: '1.2rem', margin: 0 }}>{currentStage.title}</h3>
-                    <p style={{ fontSize: '0.9rem', margin: 0 }}>{currentStage.subtitle}</p>
-                  </div>
-                  <span className="badge" style={{ padding: '4px 12px', fontSize: '0.8rem' }}>S{stage}</span>
-                </div>
                 <div className="panel" style={{ flex: 1, position: 'relative', overflow: 'hidden', background: '#000', borderRadius: '16px', marginTop: '16px' }}>
                   <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                      <div style={{ position: 'relative', maxWidth: '100%', maxHeight: '100%', aspectRatio: imageAspectRatio }}>
-                        <div className="scan-line" style={{ animation: 'scan 2s linear infinite' }} />
+                        
+                        {/* THE HORIZONTAL LASER SCANNER (Moving Row by Row) */}
+                        <motion.div 
+                          initial={{ top: '0%', left: '0%', width: '12.5%' }}
+                          animate={{ 
+                            top: ['0%', '0%', '12.5%', '12.5%', '25%', '25%', '37.5%', '37.5%', '50%', '50%', '62.5%', '62.5%', '75%', '75%', '87.5%', '87.5%'],
+                            left: ['0%', '100%', '0%', '100%', '0%', '100%', '0%', '100%', '0%', '100%', '0%', '100%', '0%', '100%', '0%', '100%']
+                          }}
+                          transition={{ duration: 6, ease: "linear", repeat: Infinity }}
+                          style={{ 
+                            position: 'absolute',
+                            zIndex: 30, 
+                            height: '12.5%', 
+                            borderLeft: '4px solid #ef4444',
+                            background: 'linear-gradient(90deg, rgba(239, 68, 68, 0.4), transparent)',
+                            boxShadow: '-10px 0 20px rgba(239, 68, 68, 0.5)'
+                          }}
+                        />
+
+                        {/* STAGGERED GRID REVEAL (Row by Row) */}
+                        <motion.div 
+                          style={{ 
+                            position: 'absolute', 
+                            inset: 0, 
+                            display: 'grid', 
+                            gridTemplateColumns: 'repeat(8, 1fr)', 
+                            gridTemplateRows: 'repeat(8, 1fr)',
+                            zIndex: 20
+                          }}
+                          initial="hidden"
+                          animate="visible"
+                          variants={{
+                            visible: { transition: { staggerChildren: 0.08 } }
+                          }}
+                        >
+                          {Array.from({ length: 64 }).map((_, i) => {
+                            const row = Math.floor(i / 8);
+                            const col = i % 8;
+                            const isSuspicious = analysis.detections.some(box => {
+                              const cellX1 = (col / 8) * 100;
+                              const cellX2 = ((col + 1) / 8) * 100;
+                              const cellY1 = (row / 8) * 100;
+                              const cellY2 = ((row + 1) / 8) * 100;
+                              return !(box.x2 < cellX1 || box.x1 > cellX2 || box.y2 < cellY1 || box.y1 > cellY2);
+                            });
+
+                            return (
+                              <motion.div
+                                key={i}
+                                variants={{
+                                  hidden: { opacity: 0 },
+                                  visible: { opacity: 1 }
+                                }}
+                                style={{ 
+                                  border: isSuspicious ? '2px solid #f97316' : '1px solid rgba(239, 68, 68, 0.3)',
+                                  background: isSuspicious ? 'rgba(249, 115, 22, 0.2)' : 'rgba(239, 68, 68, 0.05)',
+                                  boxShadow: isSuspicious ? 'inset 0 0 10px rgba(249, 115, 22, 0.3)' : 'none',
+                                }}
+                              />
+                            );
+                          })}
+                        </motion.div>
                         <img src={analysis.originalPreview} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                      </div>
                   </div>
-                  <style>{`@keyframes scan { 0% { top: 0%; } 100% { top: 100%; } }`}</style>
                 </div>
              </section>
           )}
@@ -364,7 +404,6 @@ export default function Dashboard() {
                 <div className="thermal-stage-wrap">
                   <div className="thermal-stage">
                     <div className="thermal-stage-inner" style={{ aspectRatio: imageAspectRatio }}>
-                      {stage === 3 ? <div className="scan-line" /> : null}
                       <img ref={imageRef} src={analysis.originalPreview} alt="Pipeline preview" />
                       {showBoxes && analysis.detections.map((box) => (
                         <button
@@ -393,14 +432,6 @@ export default function Dashboard() {
               </div>
 
               <div className="panel panel-scroll">
-                <div className="panel-title" style={{ padding: '12px 0', marginBottom: '12px' }}>
-                  <div>
-                    <h3 style={{ fontSize: '1.2rem', margin: 0 }}>{currentStage.title}</h3>
-                    <p style={{ fontSize: '0.9rem', margin: 0 }}>{currentStage.subtitle}</p>
-                  </div>
-                  <span className="badge" style={{ padding: '4px 12px', fontSize: '0.8rem' }}>S{stage}</span>
-                </div>
-
                 <div style={{ padding: '0' }}>
                 {activeBox ? (
                   <div className="details">
