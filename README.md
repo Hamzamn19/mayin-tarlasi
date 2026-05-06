@@ -2,10 +2,9 @@
 
 > **A Hybrid Deep Learning & Statistical Analysis Pipeline for Detecting Buried Landmines Using LWIR Thermal Imagery**
 
-[![Python](https://img.shields.io/badge/Python-3.8%2B-blue?logo=python&logoColor=white)](#)
+[![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python&logoColor=white)](#)
 [![YOLOv8](https://img.shields.io/badge/YOLOv8-Ultralytics-purple?logo=ultralytics)](#)
 [![YOLO26](https://img.shields.io/badge/YOLO26-Latest-orange)](#)
-[![Streamlit](https://img.shields.io/badge/Streamlit-App-red?logo=streamlit)](#)
 [![scikit-learn](https://img.shields.io/badge/scikit--learn-ML-green?logo=scikitlearn)](#)
 [![License](https://img.shields.io/badge/License-Academic-lightgrey)](#)
 
@@ -140,8 +139,6 @@ MAYIN TARLASI/
 │   └── validate_csv_with_yolo.py  # Cross-validate CSV features against YOLO re-extraction
 │
 ├── deployment/                    # Web apps & inference
-│   ├── app.py                     # Streamlit dashboard for single-image detection
-│   ├── interactive_pipeline.py    # Step-by-step interactive Streamlit pipeline demo
 │   └── inference_tensorrt.cpp     # C++ TensorRT inference template for edge deployment
 │
 ├── landmine_flat/                 # Flattened dataset (train/val/test splits)
@@ -378,8 +375,8 @@ Each bounding box region is analyzed to extract 5 handcrafted physical and therm
 ### Prerequisites
 
 ```bash
-# 1. Backend Dependencies (Python 3.8+)
-pip install ultralytics==8.4.11 opencv-python==4.13.0.92 numpy==1.26.4 pandas==3.0.1 scikit-learn==1.8.0 joblib==1.5.3 matplotlib==3.10.8 seaborn==0.13.2 scipy==1.17.0 streamlit==1.56.0 fastapi==0.128.1 uvicorn==0.40.0 python-multipart==0.0.22
+# 1. Backend Dependencies (Python 3.12)
+pip install ultralytics==8.4.11 opencv-python==4.13.0.92 numpy==1.26.4 pandas==3.0.1 scikit-learn==1.8.0 joblib==1.5.3 matplotlib==3.10.8 seaborn==0.13.2 scipy==1.17.0 fastapi==0.128.1 uvicorn==0.40.0 python-multipart==0.0.22
 
 # 2. Frontend Dependencies (Node.js & npm)
 cd nextjs-app
@@ -407,7 +404,11 @@ python machine_learning/train_ml_models.py
 python evaluation/hybrid_evaluation.py
 
 # 6. Launch web demo
-streamlit run deployment/app.py
+# Start backend in background or another terminal
+uvicorn backend.main:app --reload --port 8000 &
+# Start frontend
+cd nextjs-app
+npm run dev
 ```
 
 ### GPU Inference
@@ -455,7 +456,6 @@ If you use this work in your research, please cite:
 ```bibtex
 @project{mayin_tarlasi_2026,
   title   = {Aerial Landmine Detection using Hybrid Deep Learning and Statistical Analysis},
-  author  = {Hamzah Shalaldeh},
   year    = {2026},
   school  = {Beykoz University},
   note    = {Estimation and Prediction Course Project}
@@ -466,17 +466,5 @@ If you use this work in your research, please cite:
 
 <p align="center">
   <b>⚠️ This project is developed for academic and humanitarian research purposes only.</b><br>
-  <i>Beykoz University — CME6102 Estimation and Prediction — April 2026</i>
-</p>
-
-```
-
----
-
-<p align="center">
-  <b>⚠️ This project is developed for academic and humanitarian research purposes only.</b><br>
-  <i>Beykoz University — CME6102 Estimation and Prediction — April 2026</i>
-</p>
- academic and humanitarian research purposes only.</b><br>
   <i>Beykoz University — CME6102 Estimation and Prediction — April 2026</i>
 </p>
