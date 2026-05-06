@@ -291,37 +291,29 @@ python evaluation/validate_csv_with_yolo.py
 
 ### Stage 6: Deployment
 
-Two Streamlit web applications and a C++ TensorRT template are provided:
+The system features a **FastAPI backend** and a modern **Next.js** web application with advanced interactive UI capabilities, alongside a C++ TensorRT template for edge deployment:
 
 ```bash
-# Single-image detection dashboard
-streamlit run deployment/app.py
+# 1. Start the FastAPI Backend
+uvicorn backend.main:app --reload --port 8000
 
-# Interactive step-by-step pipeline demo
-streamlit run deployment/interactive_pipeline.py
+# 2. Start the Next.js Frontend Dashboard
+cd nextjs-app
+npm run dev
 ```
 
-**`app.py`** — Full-featured dashboard with:
-- Adjustable YOLO confidence threshold (High Recall slider)
-- Side-by-side original vs. annotated view
-- Ground truth comparison from CSV
-- Per-model prediction table (LR, RF, Ensemble)
-- Advanced model comparison summary
+**Modern UI (`nextjs-app`):**
+- **Glassmorphism Design:** Modern aesthetic with refined visual hierarchy.
+- **Stage 3 Grid Animations:** Row-by-row animated grid scanning that synchronously reveals cells and highlights suspicious regions.
+- **Detection Details Card:** Professional crosshair overlay for precise bounding box visualization and detailed Region of Interest (ROI) mapping.
+- **Real-time Pipeline:** Visualizes the 7-stage analytical process directly in the browser.
 
-**`interactive_pipeline.py`** — 7-step guided walkthrough:
-1. Welcome & Image Upload
-2. YOLO Neural Scanning
-3. Feature Matrix Inspection
-4. Logistic Regression Analysis
-5. Random Forest Analysis
-6. Ensemble Consensus
-7. Executive Dashboard
+**`backend/main.py`** — FastAPI Server:
+- Handles high-performance asynchronous REST endpoints (`/detect`, `/pipeline`).
+- Processes image uploads, coordinates YOLOv8, extracts features, and runs Random Forest & Logistic Regression inference.
 
-**`inference_tensorrt.cpp`** — C++ template for edge deployment:
-- TensorRT engine loading
-- CUDA memory allocation
-- OpenCV image preprocessing (HWC→CHW, BGR→RGB, normalize)
-- Compile: `nvcc -o yolo_inference inference_tensorrt.cpp $(pkg-config --cflags --libs opencv4) -lnvinfer -lcudart`
+**Edge Deployment:**
+**`inference_tensorrt.cpp`** — C++ template for edge deployment via TensorRT.
 
 ---
 
@@ -386,8 +378,12 @@ Each bounding box region is analyzed to extract 5 handcrafted physical and therm
 ### Prerequisites
 
 ```bash
-# Python 3.8+
-pip install ultralytics opencv-python numpy pandas scikit-learn joblib matplotlib seaborn scipy streamlit tqdm
+# 1. Backend Dependencies (Python 3.8+)
+pip install ultralytics==8.4.11 opencv-python==4.13.0.92 numpy==1.26.4 pandas==3.0.1 scikit-learn==1.8.0 joblib==1.5.3 matplotlib==3.10.8 seaborn==0.13.2 scipy==1.17.0 streamlit==1.56.0 fastapi==0.128.1 uvicorn==0.40.0 python-multipart==0.0.22
+
+# 2. Frontend Dependencies (Node.js & npm)
+cd nextjs-app
+npm install next@14.2.30 react@18.3.1 react-dom@18.3.1 tailwindcss@4.2.4 framer-motion@12.38.0 lucide-react@1.14.0 zustand@5.0.12
 ```
 
 ### Quick Start
@@ -432,10 +428,11 @@ results = model("thermal_image.jpg", conf=0.25, device=0)
 |:---|:---|
 | **Deep Learning** | YOLOv8, YOLO26 (Ultralytics) |
 | **Classical ML** | scikit-learn (Random Forest, Logistic Regression) |
+| **Backend API** | FastAPI, Uvicorn, Python 3.12 |
+| **Frontend UI** | Next.js 14, React 18, Tailwind CSS, Framer Motion, Zustand |
 | **Computer Vision** | OpenCV (Otsu, Canny, contour analysis) |
 | **Data Analysis** | Pandas, NumPy, SciPy |
 | **Visualization** | Matplotlib, Seaborn |
-| **Web Framework** | Streamlit |
 | **Edge Deployment** | TensorRT, CUDA, C++ |
 | **Training Compute** | Kaggle (Tesla T4 GPU, 16GB VRAM) |
 | **Annotation Format** | Pascal VOC (XML) → YOLO (TXT) |
@@ -469,5 +466,17 @@ If you use this work in your research, please cite:
 
 <p align="center">
   <b>⚠️ This project is developed for academic and humanitarian research purposes only.</b><br>
+  <i>Beykoz University — CME6102 Estimation and Prediction — April 2026</i>
+</p>
+
+```
+
+---
+
+<p align="center">
+  <b>⚠️ This project is developed for academic and humanitarian research purposes only.</b><br>
+  <i>Beykoz University — CME6102 Estimation and Prediction — April 2026</i>
+</p>
+ academic and humanitarian research purposes only.</b><br>
   <i>Beykoz University — CME6102 Estimation and Prediction — April 2026</i>
 </p>
