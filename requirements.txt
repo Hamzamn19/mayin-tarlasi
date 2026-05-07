@@ -1,0 +1,13 @@
+ultralytics==8.4.11
+opencv-python
+numpy
+pandas
+scikit-learn
+joblib
+matplotlib
+seaborn
+scipy
+fastapi
+uvicorn
+python-multipart
+pillow

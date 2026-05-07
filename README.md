@@ -372,43 +372,60 @@ Each bounding box region is analyzed to extract 5 handcrafted physical and therm
 
 ## 🚀 Installation & Usage
 
-### Prerequisites
+### 1. Prerequisites
+- **Python 3.12**
+- **Node.js 18+ & npm**
+- **Git**
+
+### 2. Setup
 
 ```bash
-# 1. Backend Dependencies (Python 3.12)
-pip install ultralytics==8.4.11 opencv-python==4.13.0.92 numpy==1.26.4 pandas==3.0.1 scikit-learn==1.8.0 joblib==1.5.3 matplotlib==3.10.8 seaborn==0.13.2 scipy==1.17.0 fastapi==0.128.1 uvicorn==0.40.0 python-multipart==0.0.22
-
-# 2. Frontend Dependencies (Node.js & npm)
-cd nextjs-app
-npm install next@14.2.30 react@18.3.1 react-dom@18.3.1 tailwindcss@4.2.4 framer-motion@12.38.0 lucide-react@1.14.0 zustand@5.0.12
-```
-
-### Quick Start
-
-```bash
-# 1. Clone the repository
+# Clone the repository
 git clone https://github.com/Hamzamn19/mayin-tarlasi.git
 cd mayin-tarlasi
 
-# 2. Prepare dataset (if starting from raw)
+# Install Backend Dependencies
+pip install -r requirements.txt
+
+# Install Frontend Dependencies
+cd nextjs-app
+npm install
+cd ..
+```
+
+### 3. Dataset & Weights
+Note: The actual dataset and trained weights are large and may be excluded from the repository.
+- **Weights:** Ensure `results/runs/detect/Landmine_Detection_2026/YOLO26_S_Standard/weights/best.pt` exists.
+- **Dataset:** The `landmine_flat/` directory should contain the `train/`, `val/`, and `test/` splits if you intend to run the processing/training scripts.
+
+### 4. Running the Application
+
+To run the full interactive system:
+
+**Terminal 1: Start Backend (FastAPI)**
+```bash
+python deployment/api.py
+```
+
+**Terminal 2: Start Frontend (Next.js)**
+```bash
+cd nextjs-app
+npm run dev
+```
+The application will be available at `http://localhost:3000`.
+
+### 5. Training & Evaluation
+If you want to run the pipeline stages from scratch:
+```bash
+# Data Preparation
 python data_processing/rename_dataset.py
 python data_processing/split_raw_data.py
 
-# 3. Extract features
+# Feature Extraction
 python data_processing/extract_pipeline.py
 
-# 4. Train ML models
+# ML Training
 python machine_learning/train_ml_models.py
-
-# 5. Evaluate
-python evaluation/hybrid_evaluation.py
-
-# 6. Launch web demo
-# Start backend in background or another terminal
-uvicorn backend.main:app --reload --port 8000 &
-# Start frontend
-cd nextjs-app
-npm run dev
 ```
 
 ### GPU Inference

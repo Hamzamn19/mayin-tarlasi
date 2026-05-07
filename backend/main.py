@@ -16,8 +16,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Shared models
-MODEL_PATH = "/home/hamzah/Desktop/beykoz/proje/MAYIN TARLASI/results/runs/detect/Landmine_Detection_2026/YOLO26_S_Standard/weights/best.pt"
+# Resolve paths
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MODEL_PATH = os.path.join(BASE_DIR, "results/runs/detect/Landmine_Detection_2026/YOLO26_S_Standard/weights/best.pt")
 yolo_model = YOLO(MODEL_PATH)
 
 @app.post("/detect")
