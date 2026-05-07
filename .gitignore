@@ -1,3 +1,7 @@
+# Allow specific models
+!results/runs/detect/Landmine_Detection_2026/YOLO26_S_Standard/weights/best.pt
+!outputs/logistic_regression_model.pkl
+
 landmine_final - Copy/
 landmine_final - Copy.7z
 EDA.tar.xz
