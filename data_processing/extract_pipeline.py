@@ -28,7 +28,11 @@ MAX_BG_SAMPLES   = None   # set dynamically after pass 1
 # ── Feature extraction helpers ─────────────────────────────────────────────
 
 def extract_features(crop, img_gray, xmin, ymin, xmax, ymax):
-    """Extract 5 handcrafted features from a bounding-box crop."""
+    """Extract 10 handcrafted features from a bounding-box crop.
+    
+    Original 5: area, circularity, mean_intensity, thermal_contrast, edge_density
+    New 5:      intensity_std, aspect_ratio, thermal_gradient, max_min_ratio, relative_size
+    """
     if crop is None or crop.size == 0:
         return None
 
@@ -61,9 +65,9 @@ def extract_features(crop, img_gray, xmin, ymin, xmax, ymax):
     mean_intensity = float(np.mean(gray_crop))
 
     # 4. Thermal contrast with background
-    #    Background = border ring (5px) around the bounding box, clamped to image
+    #    Background = proportional ring around the bounding box, clamped to image
     img_h, img_w = img_gray.shape[:2]
-    pad = 5
+    pad = max(5, int(0.2 * max(h, w)))  # 20% of object size, min 5px
     bx1 = max(0, xmin - pad)
     by1 = max(0, ymin - pad)
     bx2 = min(img_w, xmax + pad)
@@ -85,12 +89,40 @@ def extract_features(crop, img_gray, xmin, ymin, xmax, ymax):
     edges = cv2.Canny(gray_crop, 50, 150)
     edge_density = float(np.sum(edges > 0)) / area if area > 0 else 0.0
 
+    # ── NEW FEATURES (6–10) ──────────────────────────────────────────────
+
+    # 6. Intensity standard deviation — mines are thermally more uniform
+    intensity_std = float(np.std(gray_crop))
+
+    # 7. Aspect ratio — mines are roughly circular (ratio ≈ 1.0)
+    aspect_ratio = float(w) / float(h) if h > 0 else 1.0
+
+    # 8. Thermal gradient magnitude — sharp edges around buried mines
+    sobel_x = cv2.Sobel(gray_crop, cv2.CV_64F, 1, 0, ksize=3)
+    sobel_y = cv2.Sobel(gray_crop, cv2.CV_64F, 0, 1, ksize=3)
+    gradient_mag = np.sqrt(sobel_x**2 + sobel_y**2)
+    thermal_gradient = float(np.mean(gradient_mag))
+
+    # 9. Max/Min intensity ratio — captures extreme thermal contrast
+    min_val = float(np.min(gray_crop))
+    max_val = float(np.max(gray_crop))
+    max_min_ratio = max_val / (min_val + 1e-6)  # epsilon to avoid division by zero
+
+    # 10. Relative size — area as fraction of full image
+    image_area = float(img_h * img_w)
+    relative_size = area / image_area if image_area > 0 else 0.0
+
     return {
         "area": area,
         "circularity": circularity,
         "mean_intensity": mean_intensity,
         "thermal_contrast": thermal_contrast,
         "edge_density": edge_density,
+        "intensity_std": intensity_std,
+        "aspect_ratio": aspect_ratio,
+        "thermal_gradient": thermal_gradient,
+        "max_min_ratio": max_min_ratio,
+        "relative_size": relative_size,
     }
 
 
@@ -242,6 +274,7 @@ print(f"\nExtraction complete: {mine_count:,} mine samples | {bg_count:,} backgr
 
 df = pd.DataFrame(records)
 df = df[["area", "circularity", "mean_intensity", "thermal_contrast", "edge_density",
+         "intensity_std", "aspect_ratio", "thermal_gradient", "max_min_ratio", "relative_size",
          "label", "mine_type", "split", "source_file"]]
 
 df.to_csv(OUTPUT_CSV, index=False)

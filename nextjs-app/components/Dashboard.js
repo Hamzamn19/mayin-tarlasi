@@ -535,10 +535,6 @@ export default function Dashboard() {
                           <div className="bar-bg"><div className="bar-fill lr" style={{ width: formatPercent(activeBox.conf) }} /></div>
                         </div>
                         <div className="bar-item">
-                          <div className="bar-header"><span>Logistic Regression</span><span>{formatPercent(activeBox.lr_prob)}</span></div>
-                          <div className="bar-bg"><div className="bar-fill lr" style={{ width: formatPercent(activeBox.lr_prob) }} /></div>
-                        </div>
-                        <div className="bar-item">
                           <div className="bar-header"><span>Random Forest</span><span>{formatPercent(activeBox.rf_prob)}</span></div>
                           <div className="bar-bg"><div className="bar-fill rf" style={{ width: formatPercent(activeBox.rf_prob) }} /></div>
                         </div>
@@ -550,7 +546,7 @@ export default function Dashboard() {
                         <div className={`final-verdict ${activeBox.ensemble_pred === 1 ? 'mine' : 'safe'}`} style={{ textAlign: 'center', padding: '32px 24px' }}>
                           <div style={{ fontSize: '3rem', marginBottom: '12px' }}>{activeBox.ensemble_pred === 1 ? '💣' : '✅'}</div>
                           <div style={{ fontSize: '1.8rem', fontWeight: 'bold' }}>{activeBox.ensemble_pred === 1 ? 'DANGER: MINE' : 'CLEAR: SAFE'}</div>
-                          <div style={{ marginTop: '12px', opacity: 0.8, fontSize: '1.1rem' }}>Ensemble Probability: {formatPercent(activeBox.ensemble_prob)}</div>
+                          <div style={{ marginTop: '12px', opacity: 0.8, fontSize: '1.1rem' }}>RF Probability: {formatPercent(activeBox.rf_prob)}</div>
                         </div>
                       </div>
                     )}

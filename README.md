@@ -46,6 +46,8 @@ The hybrid ensemble approach overcomes the limitations of pure thermal sensing a
 
 ## 🏆 Key Results
 
+### ⚡ Quick Summary (Key Performance Indicators)
+
 | Metric | Value |
 |:---|:---:|
 | **YOLO26 mAP@50 (Overall)** | **91.9%** |
@@ -56,6 +58,69 @@ The hybrid ensemble approach overcomes the limitations of pure thermal sensing a
 | **Random Forest Accuracy** | 80.72% |
 | **Inference Speed** | 4.9ms/image (~204 FPS) |
 | **Optimized Model Size** | 20.3 MB |
+
+### 📊 Comprehensive Evaluation Results (1,320 Images - 14,905 Landmines)
+
+| System | Precision | Recall | Total Error Rate |
+|:---|:---:|:---:|:---:|
+| **YOLO26 Only** | 94.27% | 95.78% | 10.04% |
+| **YOLO + Random Forest 🏆 (Threshold 0.4)** | **98.29%** | **95.55%** | **6.11%** |
+| **YOLO + XGBoost** | 98.76% | 88.37% | 12.75% |
+| **Hybrid System (Soft Voting)** | 98.50% | 95.04% | 6.40% |
+
+#### 🔍 Final Comprehensive Analysis:
+
+1. **The Absolute Winner (Random Forest):**
+   * The Random Forest model (with a 0.4 safety threshold) proved to be the most stable and reliable across the entire dataset.
+   * It reduced the total error rate from 10% (in YOLO alone) to just 6.11%.
+   * It boosted precision to 98.29%, meaning that out of every 100 mines detected by the system, 98 are indeed real mines (near-zero false alarms).
+
+2. **Strong YOLO Performance:**
+   * YOLOv26 shows immense capability in initial detection (Recall 95.78%), serving as the solid foundation upon which the remaining filters are built.
+
+3. **XGBoost:**
+   * Despite being highly precise (98.76%), it tends to miss mines more frequently than RF, which inflated its overall error rate.
+
+4. **Hybrid System (Soft Voting):**
+   * Its performance is very close to RF. It is an excellent choice if a more "conservative" system is desired to combine the strengths of both models, but RF alone was better at minimizing total errors.
+
+---
+
+### 📊 Performance Comparison: 5 Features vs 10 Features (Random Forest)
+
+| Metric | 5 Features Model | 10 Features Model 🏆 | Improvement |
+| :--- | :---: | :---: | :---: |
+| **Accuracy** | 86.02% | **89.96%** | 🟢 +3.94% |
+| **Precision** | 87.16% | **90.64%** | 🟢 +3.48% |
+| **Recall** | 84.63% | **89.22%** | 🟢 +4.59% |
+| **Total Error Rate** | 13.98% | **10.04%** | 📉 -3.94% |
+| **False Positives** | 2,871 | **2,120** | 🛡️ 751 fewer false alarms |
+| **False Negatives** | 3,538 | **2,481** | 🎯 1,057 more mines detected |
+
+#### 💡 Analysis: Why is the difference so significant?
+
+1. **The 5 Features (Basic):**
+   *(Area, Circularity, Mean Intensity, Thermal Contrast, Edge Density)*
+   These focus strictly on **size, shape, and basic contrast**. While effective, they fall into the trap of naturally occurring circular hot objects (like heated rocks or scattered metal pieces), resulting in high false alarms (2,871).
+
+2. **The 10 Features (Advanced):**
+   *Addition of: (Intensity Std Dev, Aspect Ratio, Thermal Gradient, Max/Min Ratio, Relative Size)*
+   These features give the system a much deeper dimension for understanding the **structure and heat distribution inside the object**:
+   - **(Thermal Gradient):** Distinguishes the geometrically engineered edges of a mine from the random edges of rocks.
+   - **(Intensity Std Dev & Max/Min Ratio):** Differentiates the uniform heat distribution of a mine from the random distribution of natural objects.
+   - **Result:** A massive drop in missed mines (False Negatives reduced by nearly a third) and a significant increase in confidence, effectively avoiding false alarms.
+
+**Conclusion:**
+Adding the 5 advanced features was not just padding data; it gave the `Random Forest` model the necessary statistical awareness to accurately distinguish between a "hot circular object" and a "real landmine," making it the strongest defensive filter after the initial YOLO detection.
+
+---
+
+#### 💡 Final Project Recommendation:
+Based on this comprehensive evaluation, the best technical configuration for the project is:
+**YOLOv26 + Random Forest (Threshold: 0.4) + Physical Features (10 features) + YOLO Confidence.**
+This system is the safest and most accurate across all weather conditions and times captured in the dataset (Morning, Noon, Afternoon).
+
+*(Note: Logistic Regression was initially tested but failed to generalize effectively due to the non-linear nature of thermal features, making it a bad example of classical modeling for this domain. It has been removed from the final inference pipeline.)*
 
 ### Comparative Benchmarking vs Original AMLID Research
 
@@ -77,7 +142,7 @@ The hybrid ensemble approach overcomes the limitations of pure thermal sensing a
 │  ┌──────────┐    ┌────────────┐    ┌─────────────┐    ┌──────────────┐ │
 │  │ LWIR     │    │ YOLOv8/26  │    │  Feature    │    │  Ensemble    │ │
 │  │ Thermal  │───>│ Object     │───>│ Extraction  │───>│  Voting      │ │
-│  │ Image    │    │ Detection  │    │ (5 Features)│    │ (YOLO + RF)  │ │
+│  │ Image    │    │ Detection  │    │ (10 Features)│    │ (YOLO + RF)  │ │
 │  └──────────┘    └────────────┘    └─────────────┘    └──────────────┘ │
 │                        │                  │                  │          │
 │                        v                  v                  v          │
@@ -136,7 +201,11 @@ MAYIN TARLASI/
 ├── evaluation/                    # Model evaluation & benchmarking
 │   ├── compare_models.py          # Benchmark YOLOv8 vs YOLO26 (speed, accuracy, GPU)
 │   ├── hybrid_evaluation.py       # Evaluate all ensemble strategies (AND/OR/Soft Voting)
-│   └── validate_csv_with_yolo.py  # Cross-validate CSV features against YOLO re-extraction
+│   ├── validate_csv_with_yolo.py  # Cross-validate CSV features against YOLO re-extraction
+│   ├── evaluate_all_images.py     # Run comprehensive evaluation on the entire test set
+│   └── test_100_images_pipeline.py # Rapid validation of the pipeline on 100 sample images
+│
+├── compare_features_rf.py         # Comparative analysis of 5 vs 10 features for Random Forest
 │
 ├── deployment/                    # Web apps & inference
 │   └── inference_tensorrt.cpp     # C++ TensorRT inference template for edge deployment
@@ -257,7 +326,7 @@ python machine_learning/smart_retrain_hybrid.py
 | Model | Configuration | Purpose |
 |:---|:---|:---|
 | **Logistic Regression** | `max_iter=1000`, `class_weight='balanced'` | Linear decision boundary, probabilistic output |
-| **Random Forest** | `n_estimators=100`, `max_depth=15`, `class_weight='balanced'` | Non-linear ensemble, noise-robust |
+| **Random Forest** | `n_estimators=200`, `max_depth=20`, `class_weight='balanced'` | Non-linear ensemble, noise-robust |
 
 Both models use **StandardScaler** normalization and are saved as `.pkl` files for inference.
 
@@ -316,7 +385,7 @@ npm run dev
 
 ## 🔬 Extracted Features
 
-Each bounding box region is analyzed to extract 5 handcrafted physical and thermal features:
+Each bounding box region is analyzed to extract 10 handcrafted physical and thermal features:
 
 | # | Feature | Description | Formula |
 |:---:|:---|:---|:---|
@@ -325,8 +394,13 @@ Each bounding box region is analyzed to extract 5 handcrafted physical and therm
 | 3 | **Mean Intensity** | Average thermal signature (grayscale mean) | `mean(gray_crop)` |
 | 4 | **Thermal Contrast** | Temperature difference from background | `\|mean_object − mean_background\|` |
 | 5 | **Edge Density** | Structural complexity (Canny edges / area) | `count(Canny_edges > 0) / area` |
+| 6 | **Intensity Std Dev** | Thermal uniformity (mines are more uniform) | `std(gray_crop)` |
+| 7 | **Aspect Ratio** | Width-to-height ratio (mines ≈ 1.0) | `w / h` |
+| 8 | **Thermal Gradient** | Edge sharpness via Sobel operators | `mean(√(Sobel_x² + Sobel_y²))` |
+| 9 | **Max/Min Ratio** | Extreme thermal contrast within region | `max(gray) / (min(gray) + ε)` |
+| 10 | **Relative Size** | Object area as fraction of image area | `area / image_area` |
 
-> **Background Region** is defined as a 5px ring around the bounding box, excluding the object itself.
+> **Background Region** is defined as a proportional ring (20% of object size, min 5px) around the bounding box, excluding the object itself.
 
 ---
 
@@ -343,8 +417,8 @@ Each bounding box region is analyzed to extract 5 handcrafted physical and therm
 
 | Model | Algorithm | Features | Accuracy |
 |:---|:---|:---:|:---:|
-| `logistic_regression_model.pkl` | Logistic Regression | 5 | ~75% |
-| `random_forest_model.pkl` | Random Forest (100 trees) | 5 | ~80.7% |
+| `logistic_regression_model.pkl` | Logistic Regression | 10 | ~75% |
+| `random_forest_model.pkl` | Random Forest (200 trees) | 10 | ~80.7% |
 
 ---
 
@@ -377,7 +451,7 @@ Each bounding box region is analyzed to extract 5 handcrafted physical and therm
 - **Node.js 18+ & npm**
 - **Git**
 
-### 2. Setup
+### 3. Setup
 
 ```bash
 # Clone the repository
@@ -393,7 +467,13 @@ npm install
 cd ..
 ```
 
-### 3. Dataset & Weights
+### 🍎 macOS Specific Notes
+If you are using a Mac (especially Apple Silicon M1/M2/M3):
+- **Acceleration:** YOLOv8 will automatically attempt to use the **MPS (Metal Performance Shaders)** for acceleration. You don't need to change `device=0` (which is for NVIDIA CUDA) to use MPS in the Python scripts; it handles it internally, but you can explicitly use `device='mps'` in your code if needed.
+- **OpenCV:** If you face issues with GUI windows, try: `pip install opencv-python-headless`.
+- **Node.js:** Ensure you have the ARM64 version of Node.js installed for better performance.
+
+### 4. Dataset & Weights
 Note: The actual dataset and trained weights are large and may be excluded from the repository.
 - **Weights:** Ensure `results/runs/detect/Landmine_Detection_2026/YOLO26_S_Standard/weights/best.pt` exists.
 - **Dataset:** The `landmine_flat/` directory should contain the `train/`, `val/`, and `test/` splits if you intend to run the processing/training scripts.

@@ -29,7 +29,7 @@ def calculate_iou(box1, box2):
     return inter_area / union_area if union_area > 0 else 0
 
 def extract_features(crop, img_gray, xmin, ymin, xmax, ymax):
-    """Extract 5 handcrafted features (Logic from extract_pipeline.py)"""
+    """Extract 10 handcrafted features (matching extract_pipeline.py)"""
     if crop is None or crop.size == 0: return None
     h, w = crop.shape[:2]
     if h < 3 or w < 3: return None
@@ -53,9 +53,9 @@ def extract_features(crop, img_gray, xmin, ymin, xmax, ymax):
     # 3. Mean Intensity
     mean_intensity = float(np.mean(gray_crop))
     
-    # 4. Thermal Contrast
+    # 4. Thermal Contrast (proportional padding)
     img_h, img_w = img_gray.shape[:2]
-    pad = 5
+    pad = max(5, int(0.2 * max(h, w)))
     bx1, by1 = max(0, xmin - pad), max(0, ymin - pad)
     bx2, by2 = min(img_w, xmax + pad), min(img_h, ymax + pad)
     bg_region = img_gray[by1:by2, bx1:bx2].copy().astype(float)
@@ -69,8 +69,30 @@ def extract_features(crop, img_gray, xmin, ymin, xmax, ymax):
     # 5. Edge Density
     edges = cv2.Canny(gray_crop, 50, 150)
     edge_density = float(np.sum(edges > 0)) / area if area > 0 else 0.0
+
+    # 6. Intensity Std Dev
+    intensity_std = float(np.std(gray_crop))
+
+    # 7. Aspect Ratio
+    aspect_ratio = float(w) / float(h) if h > 0 else 1.0
+
+    # 8. Thermal Gradient Magnitude
+    sobel_x = cv2.Sobel(gray_crop, cv2.CV_64F, 1, 0, ksize=3)
+    sobel_y = cv2.Sobel(gray_crop, cv2.CV_64F, 0, 1, ksize=3)
+    gradient_mag = np.sqrt(sobel_x**2 + sobel_y**2)
+    thermal_gradient = float(np.mean(gradient_mag))
+
+    # 9. Max/Min Intensity Ratio
+    min_val = float(np.min(gray_crop))
+    max_val = float(np.max(gray_crop))
+    max_min_ratio = max_val / (min_val + 1e-6)
+
+    # 10. Relative Size
+    image_area = float(img_h * img_w)
+    relative_size = area / image_area if image_area > 0 else 0.0
     
-    return [area, circularity, mean_intensity, thermal_contrast, edge_density]
+    return [area, circularity, mean_intensity, thermal_contrast, edge_density,
+            intensity_std, aspect_ratio, thermal_gradient, max_min_ratio, relative_size]
 
 def parse_xml(xml_path):
     try:
@@ -147,7 +169,11 @@ def main():
                 
                 records.append(features + [label, conf, img_name])
 
-    df = pd.DataFrame(records, columns=["area", "circularity", "mean_intensity", "thermal_contrast", "edge_density", "label", "confidence", "source_file"])
+    df = pd.DataFrame(records, columns=[
+        "area", "circularity", "mean_intensity", "thermal_contrast", "edge_density",
+        "intensity_std", "aspect_ratio", "thermal_gradient", "max_min_ratio", "relative_size",
+        "label", "confidence", "source_file"
+    ])
     df.to_csv(OUTPUT_CSV, index=False)
     print(f"\nExtraction complete! Saved {len(df)} samples to {OUTPUT_CSV}")
     print(df["label"].value_counts())

@@ -1,7 +1,3 @@
-# Allow specific models
-!results/runs/detect/Landmine_Detection_2026/YOLO26_S_Standard/weights/best.pt
-!outputs/logistic_regression_model.pkl
-
 landmine_final - Copy/
 landmine_final - Copy.7z
 EDA.tar.xz
@@ -30,3 +26,10 @@ nextjs-app/.env.development.local
 nextjs-app/.env.production.local
 nextjs-app/.env.test.local
 .venv
+
+# Allow specific models and essential files
+!results/runs/detect/Landmine_Detection_2026/YOLO26_S_Standard/weights/best.pt
+!outputs/logistic_regression_model.pkl
+!outputs/scaler.pkl
+# random_forest_model.pkl is too large for GitHub (>100MB)
+outputs/random_forest_model.pkl
