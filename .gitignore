@@ -29,3 +29,4 @@ nextjs-app/.env.local
 nextjs-app/.env.development.local
 nextjs-app/.env.production.local
 nextjs-app/.env.test.local
+.venv
