@@ -1,6 +1,6 @@
 ultralytics==8.4.11
 opencv-python
-numpy
+numpy<2.0.0
 pandas
 scikit-learn
 joblib

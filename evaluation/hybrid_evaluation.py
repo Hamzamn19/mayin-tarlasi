@@ -33,7 +33,10 @@ def main():
     print(f"Total YOLO Detections in Test: {len(test_det)}")
 
     # Features
-    features = ["area", "circularity", "mean_intensity", "thermal_contrast", "edge_density"]
+    features = [
+        'area', 'circularity', 'mean_intensity', 'thermal_contrast', 'edge_density',
+        'intensity_std', 'aspect_ratio', 'thermal_gradient', 'max_min_ratio', 'relative_size'
+    ]
     X_test_scaled = scaler.transform(test_det[features])
 
     # 2. Get Individual Predictions

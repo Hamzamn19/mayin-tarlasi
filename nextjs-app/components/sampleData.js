@@ -71,6 +71,11 @@ export const featureKeys = [
   ['Mean intensity', 'mean_intensity', ''],
   ['Thermal contrast', 'thermal_contrast', ''],
   ['Edge density', 'edge_density', ''],
+  ['Intensity Std Dev', 'intensity_std', ''],
+  ['Aspect Ratio', 'aspect_ratio', ''],
+  ['Thermal Gradient', 'thermal_gradient', ''],
+  ['Max/Min Ratio', 'max_min_ratio', ''],
+  ['Relative Size', 'relative_size', ''],
 ];
 
 export const imageMeta = {

@@ -163,16 +163,16 @@ async function analyzeFile(file) {
 
 function initialAnalysis() {
   return {
-    fileName: 'demo-lwir.png',
-    fileSizeKB: fallbackMeta.fileSizeKB,
+    fileName: 'No file selected',
+    fileSizeKB: 0,
     sourceWidth: fallbackMeta.width,
     sourceHeight: fallbackMeta.height,
     width: fallbackMeta.width,
     height: fallbackMeta.height,
     originalPreview: placeholderImage,
     processedPreview: placeholderImage,
-    detections: sampleDetections,
-    fallback: true,
+    detections: [],
+    fallback: false,
   };
 }
 
@@ -183,14 +183,17 @@ function stageLabel(stage) {
 export default function Dashboard() {
   const [stage, setStage] = useState(1);
   const [analysis, setAnalysis] = useState(() => initialAnalysis());
-  const [activeBox, setActiveBox] = useState(sampleDetections[0]);
+  const [activeBox, setActiveBox] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const inputRef = useRef(null);
   const imageRef = useRef(null);
 
   useEffect(() => {
-    if (!analysis.detections.length) return;
+    if (!analysis.detections.length) {
+      setActiveBox(null);
+      return;
+    }
     setActiveBox((current) => {
       if (current && analysis.detections.some((box) => box.id === current.id)) return current;
       return analysis.detections[0];
@@ -210,12 +213,16 @@ export default function Dashboard() {
     try {
       const result = await analyzeFile(file);
       setAnalysis(result);
-      if (result.detections.length > 0) setActiveBox(result.detections[0]);
+      if (result.detections.length > 0) {
+        setActiveBox(result.detections[0]);
+      } else {
+        setActiveBox(null);
+      }
       setStage(1);
     } catch (exception) {
       setError(exception?.message || 'Failed to process image');
       setAnalysis(initialAnalysis());
-      setActiveBox(sampleDetections[0]);
+      setActiveBox(null);
     } finally {
       setLoading(false);
     }
