@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAYIN TARLASI — Aerial Landmine Detection Poster</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* ══════════════════════════════════════════
+           RESET & PRINT SETUP
+        ══════════════════════════════════════════ */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --ink:          #0F0D0B;
+            --deep:         #150F08;
+            --amber:        #D97706;
+            --amber-bright: #F59E0B;
+            --amber-pale:   #FEF3C7;
+            --amber-mid:    #FDE68A;
+            --green-ok:     #15803D;
+            --red-warn:     #B91C1C;
+            --paper:        #F8F4ED;
+            --paper-mid:    #EDE7DB;
+            --paper-dark:   #E0D8C8;
+            --muted:        #6B5E52;
+            --border:       #C8BFB0;
+            --white:        #FFFFFF;
+        }
+
+        body {
+            background: #1a1a1a;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 24px 12px;
+            font-family: 'IBM Plex Sans', sans-serif;
+            color: var(--ink);
+        }
+
+        /* ══════════════════════════════════════════
+           A4 POSTER CONTAINER
+        ══════════════════════════════════════════ */
+        .poster {
+            width: 210mm;
+            min-height: 297mm;
+            height: 297mm;
+            background: var(--paper);
+            background-image: 
+                radial-gradient(circle, transparent 40%, rgba(101, 67, 33, 0.45) 100%), /* Dense Dirt Vignette at borders */
+                radial-gradient(circle at 15% 30%, rgba(101, 67, 33, 0.48) 0%, transparent 45%), /* More dirt behind upper left column */
+                radial-gradient(circle at 18% 28%, rgba(80, 50, 20, 0.4) 0%, transparent 30%), /* Extra dark soil core */
+                radial-gradient(circle at 80% 52%, rgba(101, 67, 33, 0.45) 0%, transparent 40%), /* More dirt behind Environmental Robustness on the right */
+                radial-gradient(circle at 85% 25%, rgba(120, 53, 4, 0.2) 0%, transparent 40%),
+                radial-gradient(circle at 35% 75%, rgba(146, 64, 14, 0.22) 0%, transparent 45%),
+                radial-gradient(circle at 75% 85%, rgba(139, 92, 26, 0.25) 0%, transparent 30%),
+                radial-gradient(circle at 50% 50%, rgba(120, 53, 4, 0.18) 0%, transparent 50%),
+                url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23noiseFilter)' opacity='0.12'/%3E%3C/svg%3E");
+            background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat, repeat;
+            background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, auto;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.55);
+            position: relative;
+        }
+
+        .drone-watermark {
+            position: absolute;
+            top: 55%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-15deg);
+            width: 140mm;
+            height: 140mm;
+            color: var(--amber);
+            opacity: 0.11;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @media print {
+            body { background: white !important; padding: 0 !important; display: block !important; }
+            .poster { box-shadow: none !important; width: 210mm !important; height: 297mm !important; }
+            @page { size: A4 portrait; margin: 0; }
+        }
+
+
+        /* ══════════════════════════════════════════
+           ZONE 1 — DARK HEADER
+        ══════════════════════════════════════════ */
+        .hdr {
+            background: var(--deep);
+            flex: none;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Subtle dot grid background */
+        .hdr::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(circle, rgba(217,119,6,0.18) 1px, transparent 1px);
+            background-size: 10px 10px;
+            pointer-events: none;
+        }
+
+        .hdr-inner {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 5mm;
+            padding: 4mm 7mm 3mm;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hdr-left {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            gap: 1.8mm;
+        }
+
+        .eyebrow {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 6pt;
+            color: var(--amber);
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            margin-bottom: 1.5mm;
+        }
+
+        .main-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 30pt;
+            color: var(--white);
+            line-height: 0.88;
+            letter-spacing: 0.025em;
+        }
+
+        .main-title .accent { color: var(--amber-bright); }
+
+        .title-dash {
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 8pt;
+            font-weight: 300;
+            color: #B8A898;
+            margin-top: 1mm;
+            line-height: 1.3;
+            letter-spacing: 0.01em;
+        }
+
+        .tagline-box {
+            margin-top: 1.5mm;
+            display: inline-flex;
+            align-items: center;
+            gap: 1.5mm;
+            background: var(--amber);
+            padding: 1.2mm 2.5mm;
+            width: fit-content;
+        }
+
+        .tagline-box span {
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 7pt;
+            font-weight: 700;
+            color: var(--deep);
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+        }
+
+        .authors-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5mm 4mm;
+            margin-top: 1.5mm;
+        }
+
+        .author {
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 6pt;
+            color: #9A8A7A;
+            font-weight: 400;
+        }
+
+        .author .id {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 5pt;
+            color: #7A6E64;
+            margin-left: 0.5mm;
+        }
+
+        .author::before {
+            content: "— ";
+            color: var(--amber);
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        .supervisor-info {
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 6pt;
+            color: #9A8A7A;
+            font-weight: 400;
+            margin-top: 1.5mm;
+        }
+
+        .supervisor-info strong {
+            color: var(--amber);
+            font-family: 'IBM Plex Mono', monospace;
+            font-weight: 500;
+        }
+
+        /* Header Right Column */
+        .hdr-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+
+        /* Thermal frame visualization */
+        .thermal-frame {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .thermal-caption {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 4pt;
+            color: #5A4E45;
+            letter-spacing: 0.1em;
+            text-align: right;
+            margin-top: 1mm;
+        }
+
+
+        /* ══════════════════════════════════════════
+           ZONE 2 — KPI HERO STRIP (AMBER BAR)
+        ══════════════════════════════════════════ */
+        .kpi-bar {
+            background: var(--amber);
+            display: grid;
+            grid-template-columns: 1fr 0.5px 1fr 0.5px 1fr;
+            flex: none;
+        }
+
+        .kpi-sep { background: rgba(15,13,11,0.2); }
+
+        .kpi {
+            padding: 1.1mm 0;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            gap: 2mm;
+        }
+
+        .kpi-big {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 14.5pt;
+            color: var(--deep);
+            line-height: 0.9;
+        }
+
+        .kpi-details {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            text-align: left;
+        }
+
+        .kpi-name {
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 5.2pt;
+            font-weight: 700;
+            color: rgba(15,13,11,0.75);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .kpi-note {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 4.2pt;
+            color: rgba(15,13,11,0.55);
+            margin-top: 0.2mm;
+        }
+
+
+        /* ══════════════════════════════════════════
+           ZONE 3 — PIPELINE (FULL WIDTH)
+        ══════════════════════════════════════════ */
+        .pipeline-zone {
+            background: var(--paper-dark);
+            border-top: 1.5px solid var(--border);
+            border-bottom: 1.5px solid var(--border);
+            padding: 1.2mm 7mm;
+            flex: none;
+        }
+
+        .zone-label {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 4.5pt;
+            color: var(--muted);
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-bottom: 1mm;
+        }
+
+        .pipeline {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .pnode {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 1.2mm;
+            flex: none;
+        }
+
+        .pnode-details {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            text-align: left;
+        }
+
+        .picon {
+            width: 6.2mm;
+            height: 6.2mm;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--paper-mid);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 5.5pt;
+        }
+
+        .picon.s1 {
+            background: #0C1E35;
+            border-color: #2563EB;
+            color: #93C5FD;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 5.2pt;
+            letter-spacing: 0.05em;
+        }
+
+        .picon.s2 {
+            background: #0B2211;
+            border-color: #16A34A;
+            color: #86EFAC;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 5.2pt;
+        }
+
+        .picon.alert {
+            background: var(--amber);
+            border-color: var(--amber);
+            color: var(--deep);
+        }
+
+        .plabel {
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 4.6pt;
+            font-weight: 600;
+            color: var(--ink);
+            line-height: 1.1;
+        }
+
+        .psub {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 3.6pt;
+            color: var(--muted);
+            line-height: 1;
+        }
+
+        .parrow {
+            color: var(--amber);
+            font-size: 5.5pt;
+            flex: 1;
+            text-align: center;
+            padding-bottom: 0;
+        }
+
+
+        /* ══════════════════════════════════════════
+           ZONE 4 — MAIN 2-COLUMN BODY
+        ══════════════════════════════════════════ */
+        .body-cols {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr auto;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        /* ─── BOTTOM BAND (full-width, spans both columns) ─── */
+        .bottom-band {
+            grid-column: 1 / 3;
+            border-top: 1.5px solid var(--border);
+            background: var(--paper-dark);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+        }
+
+        .bb-half {
+            padding: 3mm 4.5mm 3mm;
+        }
+        .bb-half:first-child { padding-left: 7mm; border-right: 1px solid var(--border); }
+        .bb-half:last-child  { padding-right: 7mm; }
+
+        /* Feature Importance bars */
+        .fi-row {
+            display: flex;
+            align-items: center;
+            gap: 2mm;
+            margin-bottom: 1.5mm;
+        }
+        .fi-rank {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 4.5pt;
+            color: var(--amber);
+            font-weight: 700;
+            width: 4mm;
+            flex: none;
+            text-align: right;
+        }
+        .fi-name {
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 5.5pt;
+            font-weight: 600;
+            color: var(--ink);
+            width: 22mm;
+            flex: none;
+        }
+        .fi-track {
+            flex: 1;
+            height: 6px;
+            background: var(--paper-mid);
+            border-radius: 2px;
+            overflow: hidden;
+            border: 0.5px solid var(--border);
+        }
+        .fi-fill {
+            height: 100%;
+            border-radius: 2px;
+            background: var(--amber);
+        }
+        .fi-fill.dim { background: var(--ink); opacity: 0.35; }
+        .fi-pct {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 5.5pt;
+            font-weight: 700;
+            color: var(--ink);
+            width: 7mm;
+            text-align: right;
+            flex: none;
+        }
+
+        /* Mine distribution */
+        .mine-dist-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5mm;
+        }
+
+        .mine-card {
+            background: var(--paper-mid);
+            border: 0.5px solid var(--border);
+            border-top: 2.5px solid var(--border);
+            padding: 1.5mm 2mm;
+        }
+        .mine-card.at-pl { border-top-color: #FBBF24; }
+        .mine-card.at-mt { border-top-color: #F87171; }
+        .mine-card.ap-pl { border-top-color: #22C55E; }
+        .mine-card.ap-mt { border-top-color: #818CF8; }
+
+        .mine-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 0.8mm;
+        }
+        .mine-type-name {
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 5.5pt;
+            font-weight: 700;
+            color: var(--ink);
+        }
+        .mine-dist-pct {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 11pt;
+            color: var(--ink);
+            line-height: 1;
+        }
+        .mine-det-row {
+            display: flex;
+            align-items: center;
+            gap: 1.5mm;
+        }
+        .mine-det-label {
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 4.5pt;
+            color: var(--muted);
+            flex: none;
+        }
+        .mine-det-bar {
+            flex: 1;
+            height: 4px;
+            background: var(--paper-dark);
+            border-radius: 1px;
+            overflow: hidden;
+        }
+        .mine-det-fill { height: 100%; border-radius: 1px; }
+        .mine-det-val {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 4.5pt;
+            font-weight: 700;
+            color: var(--ink);
+            width: 8mm;
+            text-align: right;
+            flex: none;
+        }
+
+        .col {
+            padding: 3.5mm 4.5mm;
+            display: flex;
+            flex-direction: column;
+            gap: 3mm;
+            overflow: hidden;
+        }
+
+        .col-l { padding-left: 7mm; border-right: 1px solid var(--border); }
+        .col-r { padding-right: 7mm; }
+
+
+        /* ─── SECTION HEADERS ─── */
+        .sh {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 8.5pt;
+            letter-spacing: 0.12em;
+            color: var(--ink);
+            border-bottom: 1.5px solid var(--ink);
+            padding-bottom: 0.8mm;
+            margin-bottom: 2mm;
+            display: flex;
+            align-items: center;
+            gap: 1.5mm;
+        }
+
+        .sh i { color: var(--amber); font-size: 6.5pt; }
+
+
+        /* ─── ABSTRACT ─── */
+        .abstract {
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 6.5pt;
+            line-height: 1.58;
+            color: var(--ink);
+            text-align: justify;
+        }
+
+        .abstract strong { font-weight: 700; }
+
+
+        /* ─── PERFORMANCE TABLE ─── */
+        .ptable {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 5.5pt;
+        }
+
+        .ptable th {
+            background: var(--ink);
+            color: var(--white);
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 5pt;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: 1.2mm 1.5mm;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .ptable th:first-child { text-align: left; }
+
+        .ptable td {
+            font-family: 'IBM Plex Mono', monospace;
+            padding: 1mm 1.5mm;
+            border-bottom: 0.5px solid var(--border);
+            text-align: center;
+            color: var(--ink);
+        }
+
+        .ptable td:first-child {
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 5.5pt;
+            font-weight: 500;
+            text-align: left;
+        }
+
+        .ptable tr.winner td {
+            background: var(--amber-mid);
+            font-weight: 700;
+        }
+
+        .ptable tr:nth-child(even):not(.winner) td {
+            background: var(--paper-mid);
+        }
+
+        .badge {
+            display: inline-block;
+            background: var(--amber);
+            color: var(--deep);
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 4pt;
+            font-weight: 700;
+            padding: 0.3mm 1mm;
+            margin-left: 1mm;
+            border-radius: 1px;
+            letter-spacing: 0.05em;
+            vertical-align: middle;
+        }
+
+        .table-note {
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 5pt;
+            color: var(--muted);
+            margin-top: 1mm;
+        }
+
+        .table-note strong { color: var(--green-ok); }
+
+
+        /* ─── PRECISION BAR CHART ─── */
+        .bar-row {
+            display: flex;
+            align-items: center;
+            gap: 2mm;
+            margin-bottom: 1.5mm;
+        }
+
+        .bar-label {
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 5.5pt;
+            font-weight: 500;
+            color: var(--ink);
+            width: 18mm;
+            flex: none;
+        }
+
+        .bar-track {
+            flex: 1;
+            height: 5px;
+            background: var(--paper-dark);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .bar-fill { height: 100%; border-radius: 2px; }
+        .bar-fill.hi { background: var(--amber); }
+        .bar-fill.lo { background: var(--ink); }
+
+        .bar-val {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 5.5pt;
+            font-weight: 700;
+            color: var(--ink);
+            width: 8mm;
+            text-align: right;
+            flex: none;
+        }
+
+
+        /* ─── DATASET INFO GRID ─── */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1mm;
+        }
+
+        .info-box {
+            background: var(--paper-mid);
+            border: 0.5px solid var(--border);
+            border-left: 1.5px solid var(--amber);
+            padding: 0.6mm 1mm;
+        }
+
+        .info-big {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 9.5pt;
+            color: var(--ink);
+            line-height: 1;
+        }
+
+        .info-lbl {
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 4pt;
+            color: var(--muted);
+            font-weight: 500;
+            margin-top: 0.2mm;
+            line-height: 1.2;
+        }
+
+
+        /* ─── 5 VS 10 FEATURES COMPARISON ─── */
+        .cmp {
+            display: grid;
+            grid-template-columns: auto 1fr 1fr 1fr;
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .cmp-h {
+            background: var(--ink);
+            color: var(--white);
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 5pt;
+            font-weight: 600;
+            text-transform: uppercase;
+            padding: 1mm 1.5mm;
+            text-align: center;
+            letter-spacing: 0.04em;
+        }
+
+        .cmp-h:first-child { text-align: left; }
+        .cmp-h.win { background: var(--amber); color: var(--deep); }
+
+        .cmp-c {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 5.5pt;
+            padding: 1.2mm 1.5mm;
+            border-top: 0.5px solid var(--border);
+            text-align: center;
+            color: var(--ink);
+        }
+
+        .cmp-c:first-child {
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-weight: 600;
+            font-size: 5pt;
+            text-align: left;
+        }
+
+        .cmp-c.win { background: var(--amber-pale); font-weight: 700; }
+        .cmp-c.imp { color: var(--green-ok); font-weight: 700; font-size: 5pt; }
+
+        .cmp-note {
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 5pt;
+            color: var(--muted);
+            margin-top: 1mm;
+        }
+
+
+        /* ─── FEATURES GRID ─── */
+        .feat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.2mm 2.5mm;
+        }
+
+        .feat-item {
+            display: flex;
+            gap: 1.5mm;
+            align-items: baseline;
+        }
+
+        .feat-n {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 5.5pt;
+            color: var(--amber);
+            font-weight: 700;
+            flex: none;
+            width: 5mm;
+        }
+
+        .feat-name {
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 6.2pt;
+            font-weight: 500;
+            color: var(--ink);
+            line-height: 1.2;
+        }
+
+        .feat-f {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 5pt;
+            color: var(--muted);
+        }
+
+        .feat-star { color: var(--amber); font-size: 5.5pt; }
+        .feat-note { font-family: 'IBM Plex Sans', sans-serif; font-size: 5.8pt; color: var(--ink); margin-top: 1.2mm; }
+
+
+        /* ─── TECH STACK ─── */
+        .pills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1mm;
+        }
+
+        .pill {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 4.5pt;
+            font-weight: 500;
+            color: var(--ink);
+            background: var(--paper-dark);
+            border: 0.5px solid var(--border);
+            padding: 0.5mm 1.5mm;
+            border-radius: 1px;
+        }
+
+        .train-note {
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 5.5pt;
+            color: var(--ink);
+            margin-top: 1.5mm;
+            line-height: 1.45;
+        }
+
+
+        /* ══════════════════════════════════════════
+           ZONE 5 — FOOTER
+        ══════════════════════════════════════════ */
+        .footer {
+            background: var(--deep);
+            padding: 2.5mm 7mm;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex: none;
+        }
+
+        .footer-l { display: flex; flex-direction: column; gap: 0.5mm; }
+
+        .footer-warn {
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 5.5pt;
+            font-weight: 700;
+            color: var(--amber);
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+        }
+
+        .footer-uni {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 5pt;
+            color: #6B5E52;
+            letter-spacing: 0.1em;
+        }
+
+        .footer-r {
+            font-family: 'IBM Plex Sans', sans-serif;
+            font-size: 4.5pt;
+            color: #6B5E52;
+            text-align: right;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+<div class="poster">
+
+    <!-- Drone Watermark Background -->
+    <div class="drone-watermark">
+        <svg viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="85" y="85" width="30" height="30" rx="6" />
+            <circle cx="100" cy="100" r="10" />
+            <circle cx="100" cy="118" r="4" fill="currentColor" />
+            <path d="M96 118 h8 M100 110 v8" />
+            <line x1="85" y1="85" x2="40" y2="40" />
+            <line x1="115" y1="85" x2="160" y2="40" />
+            <line x1="85" y1="115" x2="40" y2="160" />
+            <line x1="115" y1="115" x2="160" y2="160" />
+            <circle cx="40" cy="40" r="14" />
+            <circle cx="40" cy="40" r="3" fill="currentColor" />
+            <path d="M28 40 h24 M40 28 v24" />
+            <circle cx="160" cy="40" r="14" />
+            <circle cx="160" cy="40" r="3" fill="currentColor" />
+            <path d="M148 40 h24 M160 28 v24" />
+            <circle cx="40" cy="160" r="14" />
+            <circle cx="40" cy="160" r="3" fill="currentColor" />
+            <path d="M28 160 h24 M40 148 v24" />
+            <circle cx="160" cy="160" r="14" />
+            <circle cx="160" cy="160" r="3" fill="currentColor" />
+            <path d="M148 160 h24 M160 148 v24" />
+            <path d="M80 140 A 30 30 0 0 0 120 140" stroke-dasharray="2,2" />
+            <path d="M70 150 A 45 45 0 0 0 130 150" stroke-dasharray="3,3" />
+        </svg>
+    </div>
+
+    <!-- ═══════════════════════════════════════
+         ZONE 1 — DARK HEADER
+    ═══════════════════════════════════════ -->
+    <div class="hdr">
+        <div class="hdr-inner">
+
+            <!-- Left: Title + Hook -->
+            <div class="hdr-left">
+                <div class="eyebrow" style="display: flex; align-items: center; gap: 2.5mm;">
+                    <img src="beykoz-universitesi-logo-44CE4CF200-seeklogo.com.webp" alt="Beykoz University Logo" style="height: 7.2mm; width: auto; background: var(--white); padding: 0.5mm 1.5mm; border-radius: 2px; box-shadow: 0 2px 5px rgba(0,0,0,0.15); border: 0.5px solid var(--border); display: block;">
+                    <span>&middot; Computer Engineering &mdash; Engineering Project II</span>
+                </div>
+
+                <div>
+                    <div class="main-title">MAYIN TARLASI<span class="accent">.</span></div>
+                    <div class="title-dash">Statistical Learning &amp; Deep Learning for Aerial Mine Detection</div>
+                </div>
+
+                <div class="tagline-box">
+                    <i class="fa-solid fa-crosshairs" style="color:var(--deep); font-size:7pt;"></i>
+                    <span>Drones That Find Buried Landmines — 91.9% Accuracy</span>
+                </div>
+
+                <div>
+                    <div class="supervisor-info" style="margin-top: 0;">
+                        <strong>Supervisor:</strong> Assoc. Prof. Mustafa Cem Kasapbaşı
+                    </div>
+
+                    <div class="authors-row" style="margin-top: 1mm;">
+                        <span class="author">Hamzah Sheikh Alashrah</span>
+                        <span class="author">Yasin Deniz Zeybek</span>
+                        <span class="author">Kemal Gençer</span>
+                        <span class="author">Emir Tayanç Kavak</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Thermal Visualization -->
+            <div class="hdr-right">
+                <div class="thermal-frame">
+                    <img src="outputs/detection_banner.jpg" alt="Landmine Detection Example" style="width: 66mm; height: 38mm; object-fit: cover; border: 0.5px solid var(--border); border-radius: 2px; display: block;">
+                    <div class="thermal-caption">LWIR THERMAL FRAME — YOLO26 DETECTION OVERLAY</div>
+                </div>
+            </div><!-- /hdr-right -->
+
+        </div>
+    </div><!-- /hdr -->
+
+
+    <!-- ═══════════════════════════════════════
+         ZONE 2 — KPI HERO STRIP
+    ═══════════════════════════════════════ -->
+    <div class="kpi-bar">
+        <div class="kpi">
+            <div class="kpi-big">91.9%</div>
+            <div class="kpi-details">
+                <div class="kpi-name">Peak mAP@50</div>
+                <div class="kpi-note">+5.1% vs AMLID Baseline (86.8%)</div>
+            </div>
+        </div>
+        <div class="kpi-sep"></div>
+        <div class="kpi">
+            <div class="kpi-big">93.27%</div>
+            <div class="kpi-details">
+                <div class="kpi-name">F1 Score</div>
+                <div class="kpi-note">YOLO26 + RF Ensemble</div>
+            </div>
+        </div>
+        <div class="kpi-sep"></div>
+        <div class="kpi">
+            <div class="kpi-big">204 FPS</div>
+            <div class="kpi-details">
+                <div class="kpi-name">Inference Speed</div>
+                <div class="kpi-note">4.9ms / image &middot; T4 GPU</div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════
+         ZONE 3 — PIPELINE
+    ═══════════════════════════════════════ -->
+    <div class="pipeline-zone">
+        <div class="zone-label">Dual-Stage Detection Pipeline</div>
+        <div class="pipeline">
+            <div class="pnode">
+                <div class="picon">🚁</div>
+                <div class="pnode-details">
+                    <div class="plabel">UAS Drone</div>
+                    <div class="psub">Airborne</div>
+                </div>
+            </div>
+            <div class="parrow">→</div>
+            <div class="pnode">
+                <div class="picon">🌡️</div>
+                <div class="pnode-details">
+                    <div class="plabel">LWIR Camera</div>
+                    <div class="psub">Thermal Frame</div>
+                </div>
+            </div>
+            <div class="parrow">→</div>
+            <div class="pnode">
+                <div class="picon s1">YO26</div>
+                <div class="pnode-details">
+                    <div class="plabel">YOLO26 CNN</div>
+                    <div class="psub">Stage 1 &middot; Detect</div>
+                </div>
+            </div>
+            <div class="parrow">→</div>
+            <div class="pnode">
+                <div class="picon">📐</div>
+                <div class="pnode-details">
+                    <div class="plabel">OpenCV</div>
+                    <div class="psub">10 Features</div>
+                </div>
+            </div>
+            <div class="parrow">→</div>
+            <div class="pnode">
+                <div class="picon s2">RF</div>
+                <div class="pnode-details">
+                    <div class="plabel">Random Forest</div>
+                    <div class="psub">Stage 2 &middot; Verify</div>
+                </div>
+            </div>
+            <div class="parrow">→</div>
+            <div class="pnode">
+                <div class="picon alert"><i class="fa-solid fa-triangle-exclamation" style="font-size:5.5pt;"></i></div>
+                <div class="pnode-details">
+                    <div class="plabel">Mine Alert</div>
+                    <div class="psub">Validated</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ═══════════════════════════════════════
+         ZONE 4 — BODY COLUMNS
+    ═══════════════════════════════════════ -->
+    <div class="body-cols">
+
+        <!-- ────── LEFT COLUMN ────── -->
+        <div class="col col-l">
+
+            <!-- Abstract -->
+            <div>
+                <div class="sh"><i class="fa-solid fa-file-lines"></i> Abstract</div>
+                <p class="abstract">
+                    A <strong>dual-stage hybrid pipeline</strong> detects buried landmines in LWIR thermal imagery from Unmanned Aerial Systems. <strong>YOLO26</strong> — a custom anchor-free CNN trained on Kaggle T4 GPU — provides high-recall spatial localisation. A <strong>Random Forest</strong> classifier then extracts 10 handcrafted thermal &amp; geometric features from each candidate to filter environmental false positives (solar-heated rocks, debris). Evaluated on the <strong>AMLID dataset</strong> (12,067 images · 14,905 mine instances across 4 classes), the ensemble achieves a peak <strong>mAP@50 of 91.9%</strong> — surpassing the published AMLID baseline by <strong>+5.1%</strong>. At 20.3 MB with 4.9 ms inference, it is optimised for real-time edge deployment on low-power UAS.
+                </p>
+            </div>
+
+            <!-- Ensemble Performance Table -->
+            <div>
+                <div class="sh"><i class="fa-solid fa-chart-bar"></i> Ensemble Strategy Comparison · Test Set: 14,905 Instances</div>
+                <table class="ptable">
+                    <thead>
+                        <tr>
+                            <th style="text-align:left; min-width:36mm;">Strategy</th>
+                            <th>Prec.</th>
+                            <th>Recall</th>
+                            <th>F1</th>
+                            <th>FP</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="winner">
+                            <td>YOLO26 + RF<span class="badge">WINNER</span></td>
+                            <td>95.82%</td>
+                            <td>90.86%</td>
+                            <td>93.27%</td>
+                            <td>591</td>
+                        </tr>
+                        <tr>
+                            <td>YOLO26 Only (Baseline)</td>
+                            <td>94.27%</td>
+                            <td>95.78%</td>
+                            <td>95.03%</td>
+                            <td>865</td>
+                        </tr>
+                        <tr>
+                            <td>YOLO + Logistic Reg.</td>
+                            <td>94.62%</td>
+                            <td>69.33%</td>
+                            <td>80.02%</td>
+                            <td>588</td>
+                        </tr>
+                        <tr>
+                            <td>Majority Voting</td>
+                            <td>94.78%</td>
+                            <td>93.00%</td>
+                            <td>93.88%</td>
+                            <td>764</td>
+                        </tr>
+                        <tr>
+                            <td>Unanimous Voting</td>
+                            <td>96.02%</td>
+                            <td>67.19%</td>
+                            <td>79.06%</td>
+                            <td>415</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="table-note">
+                    ✦ RF filter reduces false alarms by <strong>31.8%</strong> (865 → 591) while maintaining 90.86% recall
+                </div>
+            </div>
+
+            <!-- Class Precision Bars -->
+            <div>
+                <div class="sh"><i class="fa-solid fa-crosshairs"></i> Class-Specific Precision · YOLO26</div>
+                <div class="bar-row">
+                    <div class="bar-label">AT-Plastic</div>
+                    <div class="bar-track"><div class="bar-fill hi" style="width:99.1%"></div></div>
+                    <div class="bar-val">99.1%</div>
+                </div>
+                <div class="bar-row">
+                    <div class="bar-label">AT-Metal</div>
+                    <div class="bar-track"><div class="bar-fill hi" style="width:97.4%"></div></div>
+                    <div class="bar-val">97.4%</div>
+                </div>
+                <div class="bar-row">
+                    <div class="bar-label">AP-Plastic</div>
+                    <div class="bar-track"><div class="bar-fill lo" style="width:86.7%"></div></div>
+                    <div class="bar-val">86.7%</div>
+                </div>
+                <div class="bar-row" style="margin-bottom:0;">
+                    <div class="bar-label">AP-Metal</div>
+                    <div class="bar-track"><div class="bar-fill lo" style="width:84.6%"></div></div>
+                    <div class="bar-val">84.6%</div>
+                </div>
+                <div class="table-note" style="margin-top:1mm;">
+                    AP-Metal: most challenging — smallest object + lowest thermal contrast
+                </div>
+            </div>
+
+            <!-- Model Performance & Predictions -->
+            <div>
+                <div class="sh"><i class="fa-solid fa-square-poll-vertical"></i> Classification Confusion Matrix</div>
+                <div style="display: flex; gap: 3.5mm; margin-top: 1.5mm; align-items: center;">
+                    <img src="outputs/plots/confusion_matrix.png" alt="Confusion Matrix" style="width: 42mm; height: auto; border: 0.5px solid var(--border); border-radius: 2px; flex: none;">
+                    <div style="font-family: 'IBM Plex Sans', sans-serif; font-size: 5.5pt; color: var(--ink); line-height: 1.4; flex: 1;">
+                        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 6pt; font-weight: bold; color: var(--amber-bright); margin-bottom: 1.2mm; text-transform: uppercase;">Analysis by Mine Type:</div>
+                        <ul style="margin: 0; padding-left: 3.5mm; list-style-type: square;">
+                            <li style="margin-bottom: 1mm;"><strong>AT-Plastic (97.6% acc):</strong> Largest footprint, easiest spatial detection.</li>
+                            <li style="margin-bottom: 1mm;"><strong>AT-Metal (93.1% acc):</strong> Strong thermal mass signature.</li>
+                            <li style="margin-bottom: 1mm;"><strong>AP-Plastic (92.6% acc):</strong> Small size but distinct thermal boundary.</li>
+                            <li style="margin-bottom: 0;"><strong>AP-Metal (90.9% acc):</strong> Smallest size + lowest thermal contrast.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dataset -->
+            <div>
+                <div class="sh"><i class="fa-solid fa-database"></i> Dataset · AMLID (Gallagher &amp; Oughton, 2023–2025)</div>
+                <div class="info-grid">
+                    <div class="info-box">
+                        <div class="info-big">12,067</div>
+                        <div class="info-lbl">LWIR Images · 640×640px<br>Grayscale Single-Channel</div>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-big">14,905</div>
+                        <div class="info-lbl">Mine Instances<br>4 Classes (AT/AP × Plastic/Metal)</div>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-big">80·10·10</div>
+                        <div class="info-lbl">Train / Val / Test Split<br>1,320 test images</div>
+                    </div>
+                    <div class="info-box">
+                        <div class="info-big">20.3 MB</div>
+                        <div class="info-lbl">YOLO26 Weights · FP16<br>Edge-Ready for Low-Power UAS</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 10 Extracted Features -->
+            <div>
+                <div class="sh"><i class="fa-solid fa-calculator"></i> 10 Extracted Thermal &amp; Geometric Features</div>
+                <div class="feat-grid">
+                    <div class="feat-item">
+                        <div class="feat-n">01</div>
+                        <div>
+                            <div class="feat-name">Area</div>
+                            <div class="feat-f">w × h</div>
+                        </div>
+                    </div>
+                    <div class="feat-item">
+                        <div class="feat-n">06</div>
+                        <div>
+                            <div class="feat-name">Intensity Std Dev</div>
+                            <div class="feat-f">σ = std(gray_crop)</div>
+                        </div>
+                    </div>
+                    <div class="feat-item">
+                        <div class="feat-n">02</div>
+                        <div>
+                            <div class="feat-name">Circularity <span class="feat-star">★</span></div>
+                            <div class="feat-f">4π·A / P²</div>
+                        </div>
+                    </div>
+                    <div class="feat-item">
+                        <div class="feat-n">07</div>
+                        <div>
+                            <div class="feat-name">Aspect Ratio</div>
+                            <div class="feat-f">w / h</div>
+                        </div>
+                    </div>
+                    <div class="feat-item">
+                        <div class="feat-n">03</div>
+                        <div>
+                            <div class="feat-name">Mean Intensity</div>
+                            <div class="feat-f">μ = mean(I(x,y))</div>
+                        </div>
+                    </div>
+                    <div class="feat-item">
+                        <div class="feat-n">08</div>
+                        <div>
+                            <div class="feat-name">Thermal Gradient <span class="feat-star">★</span></div>
+                            <div class="feat-f">mean(√Gx²+Gy²) / A</div>
+                        </div>
+                    </div>
+                    <div class="feat-item">
+                        <div class="feat-n">04</div>
+                        <div>
+                            <div class="feat-name">Thermal Contrast <span class="feat-star">★</span></div>
+                            <div class="feat-f">|μ_obj − μ_bg|</div>
+                        </div>
+                    </div>
+                    <div class="feat-item">
+                        <div class="feat-n">09</div>
+                        <div>
+                            <div class="feat-name">Max/Min Ratio</div>
+                            <div class="feat-f">max(I) / (min(I)+ε)</div>
+                        </div>
+                    </div>
+                    <div class="feat-item">
+                        <div class="feat-n">05</div>
+                        <div>
+                            <div class="feat-name">Edge Density</div>
+                            <div class="feat-f">Σ(E>0) / A</div>
+                        </div>
+                    </div>
+                    <div class="feat-item">
+                        <div class="feat-n">10</div>
+                        <div>
+                            <div class="feat-name">Relative Size</div>
+                            <div class="feat-f">A / A_image</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="feat-note">
+                    ★ Top 4 features = <strong>61%</strong> of RF decision power · Circularity ranks #1 (18%) — mines are near-circular
+                </div>
+            </div>
+
+        </div><!-- /col-l -->
+
+
+        <!-- ────── RIGHT COLUMN ────── -->
+        <div class="col col-r">
+
+            <!-- Feature Separation & Density Analysis -->
+            <div>
+                <div class="sh"><i class="fa-solid fa-chart-area"></i> Feature Separation &amp; Density Analysis</div>
+                <div style="font-family: 'IBM Plex Sans', sans-serif; font-size: 5.8pt; color: var(--ink); line-height: 1.4; margin-top: 1.5mm;">
+                    <div style="display: flex; justify-content: center; margin-bottom: 1.5mm;">
+                        <img src="outputs/plots/feature_distributions_top3.png" alt="Feature Distributions" style="width: 82mm; height: auto; border: 0.5px solid var(--border); border-radius: 2px; background: rgba(0, 0, 0, 0.2);">
+                    </div>
+                    <div style="padding: 0 1mm;">
+                        <div style="font-family: 'IBM Plex Mono', monospace; font-size: 6.2pt; font-weight: bold; color: var(--amber-bright); margin-bottom: 1.5mm; text-transform: uppercase;">Density Curve Observations:</div>
+                        <ul style="margin: 0; padding-left: 3.5mm; list-style-type: square; font-size: 5.8pt; color: var(--ink); line-height: 1.4;">
+                            <li style="margin-bottom: 1.2mm;"><strong>Circularity (Top Feature):</strong> Mines exhibit a sharp peak near <code style="font-family: 'IBM Plex Mono', monospace; color: var(--amber); font-weight: bold; font-size: 5.8pt;">1.0</code> due to symmetric engineering, while clutter is distributed widely.</li>
+                            <li style="margin-bottom: 1.2mm;"><strong>Thermal Contrast:</strong> Measures the average heat difference between the target and background. Landmines show a distinct peak compared to the ambient soil.</li>
+                            <li style="margin-bottom: 0;"><strong>Thermal Gradient:</strong> Engineered mine casings display steep, uniform boundaries, contrasting with the irregular, soft heat diffusion of natural rocks.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5 vs 10 Features -->
+            <div>
+                <div class="sh"><i class="fa-solid fa-magnifying-glass-chart"></i> Benchmark: 5 vs 10 Features (Random Forest)</div>
+                <div class="cmp">
+                    <div class="cmp-h">Metric</div>
+                    <div class="cmp-h">5 Features</div>
+                    <div class="cmp-h win">10 Features 🏆</div>
+                    <div class="cmp-h">Δ</div>
+
+                    <div class="cmp-c">Accuracy</div>
+                    <div class="cmp-c">86.02%</div>
+                    <div class="cmp-c win">89.96%</div>
+                    <div class="cmp-c imp">+3.94%</div>
+
+                    <div class="cmp-c">False Positives</div>
+                    <div class="cmp-c">2,871</div>
+                    <div class="cmp-c win">2,120</div>
+                    <div class="cmp-c imp">−751 alarms</div>
+
+                    <div class="cmp-c">False Negatives</div>
+                    <div class="cmp-c">3,538</div>
+                    <div class="cmp-c win">2,481</div>
+                    <div class="cmp-c imp">+1,057 found</div>
+                </div>
+                <div class="cmp-note">Std Dev &amp; Gradient features gave the RF deeper thermal structure awareness, radically reducing misclassification of natural hot objects.</div>
+            </div>
+
+            <!-- Environmental Robustness & Generalization -->
+            <div>
+                <div class="sh"><i class="fa-solid fa-earth-americas"></i> Environmental Robustness &amp; Generalization</div>
+                <p style="font-family: 'IBM Plex Sans', sans-serif; font-size: 6.5pt; color: var(--ink); line-height: 1.4; margin-top: 1.5mm; text-align: justify; padding: 0 1mm;">
+                    Raw thermal intensity fluctuates wildly with diurnal cycles, weather patterns, and soil moisture. A 5-feature baseline relying strictly on heat values fails when solar-heated rocks or dry foliage reach thermal equilibrium with mine signatures. By expanding to 10 features (including Standard Deviation, Circularity, and Gradients), the Random Forest classifier shifts focus from absolute temperatures to spatial-structural signatures. Engineered casings preserve sharp, uniform boundaries (high gradient) and perfect circularity, whereas natural rocks present soft, diffused heat gradients and irregular aspect ratios. This structural awareness mitigates false alarms from ambient clutter by 31.8%.
+                </p>
+            </div>
+
+            <!-- Feature Importance Plot -->
+            <div>
+                <div class="sh"><i class="fa-solid fa-chart-simple"></i> Random Forest Feature Importance</div>
+                <div style="display: flex; justify-content: center; margin-top: 1.5mm;">
+                    <img src="outputs/plots/feature_importance.png" alt="Feature Importance" style="width: 70mm; height: auto; border: 0.5px solid var(--border); border-radius: 2px;">
+                </div>
+            </div>
+
+            <!-- Tech Stack -->
+            <div>
+                <div class="sh"><i class="fa-solid fa-microchip"></i> Technology Stack</div>
+                <div class="pills">
+                    <span class="pill">YOLOv8 / YOLO26</span>
+                    <span class="pill">scikit-learn (RF · LR)</span>
+                    <span class="pill">OpenCV</span>
+                    <span class="pill">FastAPI</span>
+                    <span class="pill">Next.js 14</span>
+                    <span class="pill">TensorRT / C++</span>
+                    <span class="pill">Python 3.12</span>
+                    <span class="pill">Kaggle T4 GPU</span>
+                    <span class="pill">Pascal VOC → YOLO</span>
+                    <span class="pill">FP16 Weights</span>
+                </div>
+                <div class="train-note" style="margin-top:1.5mm;">
+                    <strong>Training config:</strong> 50 epochs · SGD (lr₀=0.01, cosine decay, momentum=0.937) · batch=32 · 640×640 input · ~3.4h on Kaggle T4 · early-stop patience=10
+                </div>
+            </div>
+
+        </div><!-- /col-r -->
+
+    </div><!-- /body-cols -->
+
+
+    <!-- ═══════════════════════════════════════
+         ZONE 5 — FOOTER
+    ═══════════════════════════════════════ -->
+    <div class="footer">
+        <div class="footer-l">
+            <div class="footer-warn">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                &nbsp;Academic &amp; Humanitarian Research Only
+            </div>
+            <div class="footer-uni">
+                Beykoz University &middot; Computer Engineering &mdash; Engineering Project II &middot; Supervisor: Assoc. Prof. Mustafa Cem Kasapbaşı
+            </div>
+        </div>
+        <div class="footer-r">
+            Dataset: AMLID &middot; Gallagher &amp; Oughton (2023&ndash;2025)<br>
+            Supported by U.S. Army CEHC &middot; Ultralytics &middot; Kaggle
+        </div>
+    </div>
+
+</div><!-- /poster -->
+
+</body>
+</html>
