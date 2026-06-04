@@ -16,7 +16,9 @@ function formatPercent(value) {
 }
 
 function formatNumber(value, digits = 1) {
-  return Number.isFinite(value) ? value.toFixed(digits) : '0.0';
+  if (!Number.isFinite(value)) return '0.0';
+  if (value !== 0 && Math.abs(value) < 0.1) digits = 4;
+  return value.toFixed(digits);
 }
 
 function createPlaceholderImage() {
