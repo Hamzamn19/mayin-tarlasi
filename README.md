@@ -569,14 +569,14 @@ Each bounding box region is analyzed to extract 10 handcrafted physical and ther
 |:---:|:---|:---|:---|
 | 1 | **Area** | Physical size in pixels² | `h × w` |
 | 2 | **Circularity** | Shape compactness (mines ≈ circular) | `4π × contour_area / perimeter²` |
-| 3 | **Mean Intensity** | Average thermal signature (grayscale mean) | `mean(gray_crop)` |
-| 4 | **Thermal Contrast** | Temperature difference from background | `\|mean_object − mean_background\|` |
-| 5 | **Edge Density** | Structural complexity (Canny edges / area) | `count(Canny_edges > 0) / area` |
-| 6 | **Intensity Std Dev** | Thermal uniformity (mines are more uniform) | `std(gray_crop)` |
-| 7 | **Aspect Ratio** | Width-to-height ratio (mines ≈ 1.0) | `w / h` |
-| 8 | **Thermal Gradient** | Edge sharpness via Sobel operators | `mean(√(Sobel_x² + Sobel_y²))` |
-| 9 | **Max/Min Ratio** | Extreme thermal contrast within region | `max(gray) / (min(gray) + ε)` |
-| 10 | **Relative Size** | Object area as fraction of image area | `area / image_area` |
+| 3 | **Thermal Contrast** | Temperature difference from background | `\|mean_object − mean_background\|` |
+| 4 | **Aspect Ratio** | Width-to-height ratio (mines ≈ 1.0) | `w / h` |
+| 5 | **Radial Thermal Symmetry (RTS)** | Radial uniformity of thermal diffusion | `mean(corr(profile_i, mean_profile))` |
+| 6 | **Edge Density (LoG Zero-Crossings)** | Edge transitions via Laplacian zero-crossings | `log₁₀(∑𝟙[L_ij · L_{i+1,j+1} < 0] + 1)` |
+| 7 | **LBP Uniformity (RI)** | Rotation-invariant texture granularity | `unique(LBP_ror) / 256` |
+| 8 | **DCT High-Frequency Energy** | Fraction of DCT energy in highest octant | `∑|DCT_HF| / ∑|DCT|` |
+| 9 | **Wavelet Approximation Energy** | Coarse thermal structure via Haar wavelet | `∑LL² / ∑(LL²+LH²+HL²+HH²)` |
+| 10 | **Hole Count** | Internal voids in object mask | `|internal_contours| - 1` |
 
 > **Background Region** is defined as a proportional ring (20% of object size, min 5px) around the bounding box, excluding the object itself.
 
