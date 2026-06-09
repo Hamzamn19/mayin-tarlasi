@@ -158,13 +158,13 @@ The histograms show excellent separation between:
 ![Feature Importance](outputs/plots/feature_importance.png)
 
 The feature importance ranking reveals:
-- **Circularity (18%):** Most important - mines are circular objects
-- **Thermal Contrast (16%):** Heat difference from surroundings
-- **Radial Thermal Symmetry (14%):** Uniform heat diffusion around mine casings
-- **DCT High-Frequency Energy (13%):** Sharp engineered surface texture
-- **Features 5-10:** Supporting features for robustness (aspect ratio, wavelet energy, hole count, LBP, LoG zero-crossings)
+- **Thermal Contrast (28.1%):** Most important — temperature difference from surroundings
+- **Circularity (17.4%):** How round the object is (4π·A/P²)
+- **Radial Thermal Symmetry (9.8%):** Uniform heat diffusion around mine casings
+- **Aspect Ratio (9.5%):** Width/height ratio (~1.0 for round mines)
+- **Features 5–10:** Wavelet Approx (7.9%), Area (7.0%), Hole Count (6.2%), Edge Density (5.6%), DCT High-Freq Energy (4.9%), LBP Uniformity (3.4%)
 
-**Key Insight:** The top 4 features account for **61%** of the model's decision-making power. Circularity and Thermal Contrast alone represent 34% of the discriminative weight, confirming that engineered shape and thermal physics are the primary drivers of false-positive rejection.
+**Key Insight:** The top 4 features account for **64.8%** of the model's decision-making power. Thermal Contrast and Circularity alone represent 45.5% of the discriminative weight, confirming that thermal physics and engineered shape are the primary drivers of false-positive rejection.
 
 ### Classification Confusion Matrix
 
@@ -222,25 +222,27 @@ Color intensity represents performance (Red=Low, Green=High):
 
 | Metric | 5 Features Model | 10 Features Model 🏆 | Improvement |
 | :--- | :---: | :---: | :---: |
-| **Accuracy** | 86.02% | **89.96%** | 🟢 +3.94% |
-| **Precision** | 87.16% | **90.64%** | 🟢 +3.48% |
-| **Recall** | 84.63% | **89.22%** | 🟢 +4.59% |
-| **Total Error Rate** | 13.98% | **10.04%** | 📉 -3.94% |
-| **False Positives** | 2,871 | **2,120** | 🛡️ 751 fewer false alarms |
-| **False Negatives** | 3,538 | **2,481** | 🎯 1,057 more mines detected |
+| **Accuracy** | 84.72% | **87.81%** | 🟢 +3.09% |
+| **Precision** | 87.39% | **89.36%** | 🟢 +1.97% |
+| **Recall** | 81.32% | **85.96%** | 🟢 +4.64% |
+| **Total Error Rate** | 15.28% | **12.19%** | 📉 -3.09% |
+| **False Positives** | 2,702 | **2,355** | 🛡️ 347 fewer false alarms |
+| **False Negatives** | 4,301 | **3,231** | 🎯 1,070 more mines detected |
 
 #### 💡 Analysis: Why is the difference so significant?
 
 1. **The 5 Features (Basic):**
-   *(Area, Circularity, Mean Intensity, Thermal Contrast, Edge Density)*
-   These focus strictly on **size, shape, and basic contrast**. While effective, they fall into the trap of naturally occurring circular hot objects (like heated rocks or scattered metal pieces), resulting in high false alarms (2,871).
+   *(Area, Circularity, Thermal Contrast, Aspect Ratio, Edge Density)*
+   These focus strictly on **size, shape, and basic contrast**. While effective, they fall into the trap of naturally occurring circular hot objects (like heated rocks or scattered metal pieces), resulting in high false alarms (2,702).
 
 2. **The 10 Features (Advanced):**
-   *Addition of: (Intensity Std Dev, Aspect Ratio, Thermal Gradient, Max/Min Ratio, Relative Size)*
-   These features give the system a much deeper dimension for understanding the **structure and heat distribution inside the object**:
-   - **(Thermal Gradient):** Distinguishes the geometrically engineered edges of a mine from the random edges of rocks.
-   - **(Intensity Std Dev & Max/Min Ratio):** Differentiates the uniform heat distribution of a mine from the random distribution of natural objects.
-   - **Result:** A massive drop in missed mines (False Negatives reduced by nearly a third) and a significant increase in confidence, effectively avoiding false alarms.
+   *Addition of: (Radial Thermal Symmetry, LBP Uniformity, DCT High-Frequency Energy, Wavelet Approximation, Hole Count)*
+   These features give the system a much deeper understanding of the **structure and heat distribution inside the object**:
+   - **(Radial Thermal Symmetry):** Distinguishes the geometrically engineered heat diffusion of a mine from the random heat patterns of rocks.
+   - **(DCT High-Frequency Energy & LBP Uniformity):** Captures the smooth, manufactured surface texture of mine casings vs. rough natural surfaces.
+   - **(Wavelet Approximation):** Measures global uniformity — mines have consistent internal structure while rocks have random intensity variation.
+   - **(Hole Count):** Engineered objects have few internal voids; natural objects have irregular internal cavities.
+   - **Result:** A massive drop in missed mines (False Negatives reduced by 1,070) and a significant reduction in false alarms (-347).
 
 **Conclusion:**
 Adding the 5 advanced features was not just padding data; it gave the `Random Forest` model the necessary statistical awareness to accurately distinguish between a "hot circular object" and a "real landmine," making it the strongest defensive filter after the initial YOLO detection.
