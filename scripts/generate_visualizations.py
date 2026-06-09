@@ -23,7 +23,7 @@ PLOTS_DIR.mkdir(parents=True, exist_ok=True)
 # Professional style
 sns.set_style("whitegrid")
 plt.rcParams['figure.facecolor'] = 'white'
-plt.rcParams['font.family'] = 'Arial'
+plt.rcParams['font.family'] = 'DejaVu Sans'
 plt.rcParams['font.size'] = 10
 plt.rcParams['axes.labelsize'] = 11
 plt.rcParams['axes.labelweight'] = 'bold'
@@ -162,10 +162,11 @@ try:
     
     tabular_df = pd.read_csv(OUTPUTS_DIR / "landmine_tabular_dataV3.csv")
     
-    top_features = ['area', 'circularity', 'thermal_contrast', 
-                   'log_zero_crossings', 'lbp_ri', 'dct_high_energy']
+    top_features = ['area', 'circularity', 'thermal_contrast', 'aspect_ratio',
+                   'rts', 'log_zero_crossings', 'lbp_ri', 'dct_high_energy',
+                   'wavelet_approx', 'hole_count']
     
-    fig, axes = plt.subplots(2, 3, figsize=(15, 8))
+    fig, axes = plt.subplots(2, 5, figsize=(20, 8))
     fig.suptitle('Feature Distributions: Mines (Red) vs Background (Blue)', 
                 fontsize=13, fontweight='bold', y=0.995)
     

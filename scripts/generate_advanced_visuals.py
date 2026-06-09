@@ -68,7 +68,7 @@ yolo_box = FancyBboxPatch((3.2, 7.3), 2.2, 1.6, boxstyle="round,pad=0.1",
 ax.add_patch(yolo_box)
 ax.text(4.3, 8.3, 'STAGE 1: YOLO26', fontsize=12, ha='center', fontweight='bold', color='#FF6B6B')
 ax.text(4.3, 7.9, 'Object Detection', fontsize=10, ha='center')
-ax.text(4.3, 7.5, 'mAP: 91.9%', fontsize=9, ha='center', style='italic')
+ax.text(4.3, 7.5, 'mAP@50: 91.9%', fontsize=9, ha='center', style='italic')
 
 # Arrow 2
 arrow2 = FancyArrowPatch((5.5, 8.1), (6.5, 8.1), arrowstyle='->', 
@@ -94,7 +94,7 @@ rf_box = FancyBboxPatch((6.5, 5.5), 2.3, 1.6, boxstyle="round,pad=0.1",
 ax.add_patch(rf_box)
 ax.text(7.65, 6.5, 'STAGE 2: RANDOM FOREST', fontsize=11, ha='center', fontweight='bold', color='#2ECC71')
 ax.text(7.65, 6.1, 'Verification Filter', fontsize=10, ha='center')
-ax.text(7.65, 5.7, 'Accuracy: 90.86%', fontsize=9, ha='center', style='italic')
+ax.text(7.65, 5.7, 'Recall: 90.86%', fontsize=9, ha='center', style='italic')
 
 # Arrow down
 arrow_down = FancyArrowPatch((7.65, 7.3), (7.65, 7.1), arrowstyle='->', 
@@ -120,7 +120,7 @@ metrics_text = """KEY METRICS
 F1 Score: 93.27%
 Precision: 95.82%
 Recall: 90.86%
-FP Reduction: -30%
+FP Reduction: -31.7%
 """
 ax.text(0.3, 5.5, metrics_text, fontsize=9, family='monospace',
         bbox=dict(boxstyle='round,pad=0.8', facecolor='#E8F4F8', edgecolor='black', linewidth=2))
@@ -208,11 +208,11 @@ plt.close()
 # ============================================
 print("🔧 Creating: Feature Importance Chart...")
 
-features = ['Circularity', 'Thermal Contrast', 'Max/Min Ratio', 'Thermal Gradient', 
-            'Intensity Std Dev', 'Aspect Ratio', 'Area', 'Mean Intensity', 
-            'Relative Size', 'Edge Density']
-# Mock importance values (in practice, from model.feature_importances_)
-importance = np.array([0.18, 0.16, 0.14, 0.13, 0.12, 0.10, 0.08, 0.05, 0.03, 0.01])
+features = ['Thermal Contrast', 'Circularity', 'Radial Thermal Symmetry', 
+            'Aspect Ratio', 'Wavelet Approx', 'Area', 
+            'Hole Count', 'Edge Density', 'DCT High-Freq Energy', 'LBP Uniformity']
+# Real feature importances from trained Random Forest on 229,203 samples
+importance = np.array([0.281, 0.174, 0.098, 0.095, 0.079, 0.070, 0.062, 0.056, 0.049, 0.034])
 
 fig, ax = plt.subplots(figsize=(11, 7))
 
