@@ -19,7 +19,6 @@
   - [Error Analysis](#detailed-error-analysis)
   - [Precision-Recall Trade-off](#precision-recall-trade-off)
   - [Feature Distributions](#feature-distributions)
-  - [YOLO Detection Examples](#yolo-detection-examples-on-real-mine-images)
 - [Benchmark: 5 Features vs 10 Features](#-performance-comparison-5-features-vs-10-features)
 - [System Architecture](#-system-architecture)
 - [Dataset](#-dataset)
@@ -148,21 +147,6 @@ The histograms show excellent separation between:
 - **Red (Mines):** Concentrated, uniform thermal signatures
 - **Blue (Background):** Scattered, irregular patterns
 
-### YOLO Detection Examples on Real Mine Images
-
-**Selected thermal frames with YOLO26 overlays and explanatory callouts:**
-
-![YOLO Demo 1](outputs/plots/yolo_examples/yolo_demo_01_Jan_Jan_Afternoon_10_lwir_3.png)
-
-![YOLO Demo 2](outputs/plots/yolo_examples/yolo_demo_02_May_May_Afternoon_20_lwir_0_lwir_20.png)
-
-![YOLO Demo 3](outputs/plots/yolo_examples/yolo_demo_03_elevation_test_Jan_Afternoon_10m_0_lwir_22.png)
-
-These examples are intentionally styled as comparison panels so the reader can see:
-- The raw thermal frame on the left
-- YOLO boxes and labels on the right
-- A short caption explaining why the sample is useful for the research narrative
-
 ---
 
 ## 🎯 Advanced Performance Analytics
@@ -176,11 +160,11 @@ These examples are intentionally styled as comparison panels so the reader can s
 The feature importance ranking reveals:
 - **Circularity (18%):** Most important - mines are circular objects
 - **Thermal Contrast (16%):** Heat difference from surroundings
-- **Max/Min Ratio (14%):** Internal thermal variation
-- **Thermal Gradient (13%):** Edge sharpness detection
-- **Features 5-10:** Supporting features for robustness
+- **Radial Thermal Symmetry (14%):** Uniform heat diffusion around mine casings
+- **DCT High-Frequency Energy (13%):** Sharp engineered surface texture
+- **Features 5-10:** Supporting features for robustness (aspect ratio, wavelet energy, hole count, LBP, LoG zero-crossings)
 
-**Key Insight:** The top 4 features account for **61%** of the model's decision-making power.
+**Key Insight:** The top 4 features account for **61%** of the model's decision-making power. Circularity and Thermal Contrast alone represent 34% of the discriminative weight, confirming that engineered shape and thermal physics are the primary drivers of false-positive rejection.
 
 ### Classification Confusion Matrix
 
@@ -211,9 +195,10 @@ The feature importance ranking reveals:
 ![Strategy Heatmap](outputs/plots/strategy_heatmap.png)
 
 Color intensity represents performance (Red=Low, Green=High):
-- **YOLO+RF:** Balanced performance across all metrics
-- **YOLO Only:** High recall but lower precision
-- **Logistic Regression:** Consistent but inferior performance
+- **YOLO+RF (🏆 Winner):** Best trade-off — 95.82% precision, 90.86% recall, 93.27% F1, only 591 FP
+- **YOLO Only:** High recall (95.78%) but elevated false alarms (865 FP)
+- **Majority Voting:** Conservative alternative with 93.88% F1
+- **Logistic Regression:** Consistent but inferior performance (69.33% recall — not viable for production)
 
 ### Performance Summary Dashboard
 
@@ -221,14 +206,15 @@ Color intensity represents performance (Red=Low, Green=High):
 
 ![Detection Summary](outputs/plots/detection_summary.png)
 
-**Key Metrics Breakdown:**
+**Key Metrics Breakdown (YOLO26 + Random Forest — Production Configuration):**
 | Metric | Value | Interpretation |
 |:---|:---:|:---|
-| **True Positives** | 13,543 | Correctly identified mines |
-| **False Positives** | 591 | Incorrect mine alarms (4.2%) |
-| **Precision** | 95.82% | Of detected mines, 95.8% are real |
-| **Recall** | 90.86% | System catches 9 out of 10 mines |
-| **F1 Score** | 93.27% | Overall harmonic balance |
+| **True Positives** | 13,543 | Correctly identified mines out of 14,905 |
+| **False Positives** | 591 | Only 4.0% false alarm rate |
+| **Precision** | 95.82% | Of all detections flagged as mines, 95.8% are real |
+| **Recall** | 90.86% | System catches more than 9 out of every 10 mines |
+| **F1 Score** | 93.27% | Harmonic balance of precision and recall |
+| **FP Reduction** | 31.7% | Random Forest eliminates nearly 1 in 3 false positives from YOLO alone |
 
 ---
 
@@ -270,17 +256,8 @@ Adding the 5 advanced features was not just padding data; it gave the `Random Fo
 **Decision Order:**
 1. `YOLO26` finds candidate mine regions and produces bounding boxes with confidence scores.
 2. `Random Forest` checks the extracted thermal and geometric features from each candidate crop.
-3. `Vote / Ensemble` combines the YOLO confidence with the RF probability to produce the final decision.
+3. `Ensemble` combines the YOLO confidence with the RF probability to produce the final decision.
 4. The system then labels the region as mine / not mine based on the final ensemble score.
-
-**Visual Flow:**
-
-![Decision Flow Cards](outputs/plots/vote_flow_cards.png)
-
-![Decision Flow Animation](outputs/plots/vote_flow_cards.gif)
-
-This version presents the logic as a premium card sequence and a short animated flow: `YOLO26 → RF → Vote → Final Label`.
-The layout is intentionally designed like a luxury decision pipeline, where each stage feels like a separate card in the final verdict chain.
 
 **How the vote is computed in deployment:**
 - The code averages the YOLO confidence and the Random Forest probability.
@@ -319,15 +296,13 @@ The layout is intentionally designed like a luxury decision pipeline, where each
 
 ## 🏗 System Architecture
 
-### Visual System Design
+The MAYIN TARLASI system employs a dual-stage detection architecture as illustrated in the pipeline below. LWIR thermal frames are captured from a UAS platform and processed through YOLO26 for candidate region proposal, followed by handcrafted feature extraction and Random Forest verification.
 
-**Interactive Pipeline Architecture Diagram:**
+![Adaptive Multispectral Detection Concept](docs/ref_images/amlid-008.jpg)
+*Adaptive multispectral landmine detection concept: UAS-mounted sensors capture imagery across diverse environmental conditions, enabling optimized RGB-LWIR fusion (Gallagher & Oughton, 2025).*
 
-![System Architecture Advanced](outputs/plots/system_architecture_advanced.png)
-
-The MAYIN TARLASI system employs a dual-stage detection architecture:
 - **Stage 1 (YOLO26):** Primary object detection achieving 95.78% recall on thermal anomalies
-- **Stage 2 (Random Forest):** Secondary verification filter using 10 physical features
+- **Stage 2 (Random Forest):** Secondary verification filter using 10 geometric and thermal features
 - **Benefit:** Two-stage approach reduces false positives by 30% while maintaining high recall
 
 ### ASCII Pipeline Diagram
@@ -357,7 +332,10 @@ The MAYIN TARLASI system employs a dual-stage detection architecture:
 
 ## 📊 Dataset
 
-The project uses the **AMLID (Airborne Multi-sensor Landmine Image Dataset)** — a high-resolution multi-class landmine dataset captured using LWIR thermal cameras mounted on UAS platforms.
+The project uses the **AMLID (Adaptive Multispectral Landmine Identification Dataset)** — a high-resolution multi-class landmine dataset captured using LWIR thermal cameras mounted on UAS platforms, published by Gallagher and Oughton (2025).
+
+![Landmine Types in AMLID Dataset](docs/ref_images/amlid-000.jpg)
+*Twenty-one inert landmine simulants used in the AMLID dataset, spanning anti-personnel (AP) and anti-tank (AT) categories in both metal and plastic casing compositions. Source: Gallagher & Oughton (2025).*
 
 | Property | Details |
 |:---|:---|
@@ -756,6 +734,26 @@ If you use this work in your research, please cite:
   note    = {Estimation and Prediction Course Project}
 }
 ```
+
+---
+
+## © Copyright
+
+© 2026 Hamzah Sheikh Alashrah, Yasin Deniz Zeybek, Kemal Gençer, Emir Tayanç Kavak, Beykoz University. All rights reserved.
+
+**Team Members:**
+- **Hamzah Sheikh Alashrah** — Project lead, pipeline design, YOLO training, feature extraction, deployment, documentation, and all other work
+- **Yasin Deniz Zeybek** — RF and LR model training and tuning
+- **Kemal Gençer** — Moral support and team motivation
+- **Emir Tayanç Kavak** — Moral support and team motivation
+
+**Supervisor:** Assoc. Prof. Mustafa Cem Kasapbaşı
+
+This work is developed as part of the CME6102 Estimation and Prediction course at Beykoz University, Istanbul, Turkey. The AMLID dataset used in this research is provided by the U.S. Army Counter Explosive Hazards Center (CEHC) and is subject to its own terms of use.
+
+This project and its associated code, models, and documentation are made available for **academic and humanitarian research purposes only**. Any commercial use, military application, or deployment in live demining operations without appropriate certification is strictly prohibited. The authors assume no liability for any misuse of this work.
+
+**Attribution Requirements:** Any derivative work or publication that builds upon this project must cite the original work as specified in the [Citation](#-citation) section. Redistribution of the trained models or extracted feature datasets must retain this copyright notice.
 
 ---
 
