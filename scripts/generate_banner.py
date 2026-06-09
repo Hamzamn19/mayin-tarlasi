@@ -1,9 +1,13 @@
 import cv2
 import numpy as np
 import os
+import sys
 import joblib
 import pandas as pd
 from ultralytics import YOLO
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from data_processing.feature_functions import compute_rts, compute_log_zero_crossings, compute_lbp_ri, compute_dct_high_energy, compute_wavelet_approx, compute_hole_count
 
 # Resolve paths
 BASE_DIR = "/home/hamzah/Desktop/beykoz/proje/Machine Learning: Estimation and Prediction/MAYIN TARLASI"
@@ -17,8 +21,8 @@ rf_model = joblib.load(RF_MODEL_PATH)
 scaler = joblib.load(SCALER_PATH)
 
 FEATURE_NAMES = [
-    'area', 'circularity', 'mean_intensity', 'thermal_contrast', 'edge_density',
-    'intensity_std', 'aspect_ratio', 'thermal_gradient', 'max_min_ratio', 'relative_size'
+    'area', 'circularity', 'thermal_contrast', 'aspect_ratio', 'rts',
+    'log_zero_crossings', 'lbp_ri', 'dct_high_energy', 'wavelet_approx', 'hole_count'
 ]
 THRESHOLD = 0.4
 
@@ -40,8 +44,6 @@ def extract_features(crop, img_gray, xmin, ymin, xmax, ymax):
         if perimeter > 0:
             circularity = float(4 * np.pi * cnt_area / (perimeter ** 2))
             
-    mean_intensity = float(np.mean(gray_crop))
-    
     img_h, img_w = img_gray.shape[:2]
     pad = max(5, int(0.2 * max(h, w)))
     bx1, by1 = max(0, xmin - pad), max(0, ymin - pad)
@@ -51,29 +53,26 @@ def extract_features(crop, img_gray, xmin, ymin, xmax, ymax):
     oy1, ox1 = ymin - by1, xmin - bx1
     obj_mask[oy1:oy1 + h, ox1:ox1 + w] = True
     bg_pixels = bg_region[~obj_mask]
-    bg_mean = float(np.mean(bg_pixels)) if bg_pixels.size > 0 else mean_intensity
-    thermal_contrast = float(abs(mean_intensity - bg_mean))
+    bg_mean = float(np.mean(bg_pixels)) if bg_pixels.size > 0 else float(np.mean(gray_crop))
+    thermal_contrast = float(abs(float(np.mean(gray_crop)) - bg_mean))
     
-    edges = cv2.Canny(gray_crop, 50, 150)
-    edge_density = float(np.sum(edges > 0)) / area if area > 0 else 0.0
-    intensity_std = float(np.std(gray_crop))
     aspect_ratio = float(w) / float(h) if h > 0 else 1.0
 
-    sobel_x = cv2.Sobel(gray_crop, cv2.CV_64F, 1, 0, ksize=3)
-    sobel_y = cv2.Sobel(gray_crop, cv2.CV_64F, 0, 1, ksize=3)
-    gradient_mag = np.sqrt(sobel_x**2 + sobel_y**2)
-    thermal_gradient = float(np.mean(gradient_mag))
+    rts = compute_rts(gray_crop)
 
-    min_val = float(np.min(gray_crop))
-    max_val = float(np.max(gray_crop))
-    max_min_ratio = max_val / (min_val + 1e-6)
+    log_zero_crossings = compute_log_zero_crossings(gray_crop)
 
-    image_area = float(img_h * img_w)
-    relative_size = area / image_area if image_area > 0 else 0.0
+    lbp_ri = compute_lbp_ri(gray_crop)
+
+    dct_high_energy = compute_dct_high_energy(gray_crop)
+
+    wavelet_approx = compute_wavelet_approx(gray_crop)
+
+    hole_count = compute_hole_count(gray_crop)
     
     feats = [
-        area, circularity, mean_intensity, thermal_contrast, edge_density,
-        intensity_std, aspect_ratio, thermal_gradient, max_min_ratio, relative_size
+        area, circularity, thermal_contrast, aspect_ratio, rts,
+        log_zero_crossings, lbp_ri, dct_high_energy, wavelet_approx, hole_count
     ]
     return feats
 

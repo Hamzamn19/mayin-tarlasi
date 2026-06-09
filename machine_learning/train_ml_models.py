@@ -25,9 +25,9 @@ def main():
     print("Loading data...")
     df = pd.read_csv(CSV_PATH)
 
-    # Use all available features (backward compatible: works with 5 or 10)
-    all_features = ['area', 'circularity', 'mean_intensity', 'thermal_contrast', 'edge_density',
-                    'intensity_std', 'aspect_ratio', 'thermal_gradient', 'max_min_ratio', 'relative_size']
+    # Use all available features
+    all_features = ['area', 'circularity', 'thermal_contrast', 'aspect_ratio', 'rts',
+                    'log_zero_crossings', 'lbp_ri', 'dct_high_energy', 'wavelet_approx', 'hole_count']
     features = [f for f in all_features if f in df.columns]
     target = 'label'
 

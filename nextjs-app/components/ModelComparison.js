@@ -6,12 +6,17 @@ import LinearStage from './pipeline/LinearStage';
 import ForestStage from './pipeline/ForestStage';
 
 export default function ModelComparison({ activeBox, featureKeys, mode }) {
-  const lrWeights = { area: 1.2, circularity: 2.5, mean_intensity: 0.8, thermal_contrast: 3.1, edge_density: 1.5, bias: -4.2 };
+  const lrWeights = {
+    area: 0.0009, circularity: 3.4431, thermal_contrast: 0.0952,
+    aspect_ratio: 0.7994, rts: 1.4648,
+    log_zero_crossings: -0.8601, lbp_ri: 7.1652, dct_high_energy: 305.6818,
+    wavelet_approx: -1.7360, hole_count: -0.0598, bias: -1.5325
+  };
   
   const lrScore = useMemo(() => {
     let score = lrWeights.bias;
     featureKeys.forEach(([label, key]) => {
-      const val = (key === 'area' ? activeBox.features[key] / 1000 : key === 'mean_intensity' ? activeBox.features[key] / 255 : activeBox.features[key]);
+      const val = activeBox.features[key] || 0;
       score += val * lrWeights[key];
     });
     return score;

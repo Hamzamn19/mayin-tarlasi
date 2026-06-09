@@ -22,9 +22,14 @@ export const sampleDetections = [
     features: {
       area: 845.2,
       circularity: 0.78,
-      mean_intensity: 168.4,
       thermal_contrast: 27.2,
-      edge_density: 0.0412,
+      aspect_ratio: 0.84,
+      rts: 0.72,
+      log_zero_crossings: 168.4,
+      lbp_ri: 0.0412,
+      dct_high_energy: 0.853,
+      wavelet_approx: 156.3,
+      hole_count: 2,
     },
   },
   {
@@ -40,9 +45,14 @@ export const sampleDetections = [
     features: {
       area: 642.8,
       circularity: 0.41,
-      mean_intensity: 142.1,
       thermal_contrast: 12.7,
-      edge_density: 0.0328,
+      aspect_ratio: 0.63,
+      rts: 0.35,
+      log_zero_crossings: 142.1,
+      lbp_ri: 0.0328,
+      dct_high_energy: 0.421,
+      wavelet_approx: 98.7,
+      hole_count: 5,
     },
   },
   {
@@ -58,9 +68,14 @@ export const sampleDetections = [
     features: {
       area: 521.7,
       circularity: 0.29,
-      mean_intensity: 119.2,
       thermal_contrast: 8.5,
-      edge_density: 0.0189,
+      aspect_ratio: 0.57,
+      rts: 0.21,
+      log_zero_crossings: 119.2,
+      lbp_ri: 0.0189,
+      dct_high_energy: 0.312,
+      wavelet_approx: 67.4,
+      hole_count: 8,
     },
   },
 ];
@@ -68,14 +83,14 @@ export const sampleDetections = [
 export const featureKeys = [
   ['Area', 'area', 'px²'],
   ['Circularity', 'circularity', ''],
-  ['Mean intensity', 'mean_intensity', ''],
   ['Thermal contrast', 'thermal_contrast', ''],
-  ['Edge density', 'edge_density', ''],
-  ['Intensity Std Dev', 'intensity_std', ''],
   ['Aspect Ratio', 'aspect_ratio', ''],
-  ['Thermal Gradient', 'thermal_gradient', ''],
-  ['Max/Min Ratio', 'max_min_ratio', ''],
-  ['Relative Size', 'relative_size', ''],
+  ['Radial Thermal Sym.', 'rts', ''],
+  ['Zero Crossings', 'log_zero_crossings', ''],
+  ['LBP Uniformity', 'lbp_ri', ''],
+  ['DCT High Freq', 'dct_high_energy', ''],
+  ['Wavelet Approx', 'wavelet_approx', ''],
+  ['Hole Count', 'hole_count', ''],
 ];
 
 export const imageMeta = {

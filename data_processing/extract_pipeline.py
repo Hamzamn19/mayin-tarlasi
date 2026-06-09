@@ -3,6 +3,7 @@ Feature Extraction Pipeline for Aerial Landmine Detection
 Extracts handcrafted features from LWIR thermal images using Pascal VOC annotations.
 """
 import os
+import sys
 import glob
 import random
 import xml.etree.ElementTree as ET
@@ -10,6 +11,9 @@ import cv2
 import numpy as np
 import pandas as pd
 from pathlib import Path
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from data_processing.feature_functions import align_crop, robust_mask, compute_rts, compute_log_zero_crossings, compute_lbp_ri, compute_dct_high_energy, compute_wavelet_approx, compute_hole_count
 
 random.seed(42)
 np.random.seed(42)
@@ -30,8 +34,8 @@ MAX_BG_SAMPLES   = None   # set dynamically after pass 1
 def extract_features(crop, img_gray, xmin, ymin, xmax, ymax):
     """Extract 10 handcrafted features from a bounding-box crop.
     
-    Original 5: area, circularity, mean_intensity, thermal_contrast, edge_density
-    New 5:      intensity_std, aspect_ratio, thermal_gradient, max_min_ratio, relative_size
+    Features (10): area, circularity, thermal_contrast, aspect_ratio, rts,
+                   log_zero_crossings, lbp_ri, dct_high_energy, wavelet_approx, hole_count
     """
     if crop is None or crop.size == 0:
         return None
@@ -45,13 +49,13 @@ def extract_features(crop, img_gray, xmin, ymin, xmax, ymax):
         gray_crop = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
     else:
         gray_crop = crop.copy()
+    gray_crop = align_crop(gray_crop)
 
     # 1. Object area (pixels)
     area = float(h * w)
 
     # 2. Circularity / compactness
-    #    Apply Otsu threshold to get binary mask, then compute circularity
-    _, binary = cv2.threshold(gray_crop, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    binary = robust_mask(gray_crop)
     contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     circularity = 0.0
     if contours:
@@ -61,10 +65,7 @@ def extract_features(crop, img_gray, xmin, ymin, xmax, ymax):
         if perimeter > 0:
             circularity = float(4 * np.pi * cnt_area / (perimeter ** 2))
 
-    # 3. Mean thermal intensity (grayscale mean of crop)
-    mean_intensity = float(np.mean(gray_crop))
-
-    # 4. Thermal contrast with background
+    # 3. Thermal contrast with background
     #    Background = proportional ring around the bounding box, clamped to image
     img_h, img_w = img_gray.shape[:2]
     pad = max(5, int(0.2 * max(h, w)))  # 20% of object size, min 5px
@@ -73,6 +74,7 @@ def extract_features(crop, img_gray, xmin, ymin, xmax, ymax):
     bx2 = min(img_w, xmax + pad)
     by2 = min(img_h, ymax + pad)
     bg_region = img_gray[by1:by2, bx1:bx2].copy().astype(float)
+    mean_intensity = float(np.mean(gray_crop))
     # Mask out the object itself
     obj_mask = np.zeros_like(bg_region, dtype=bool)
     oy1 = ymin - by1
@@ -85,44 +87,40 @@ def extract_features(crop, img_gray, xmin, ymin, xmax, ymax):
         bg_mean = mean_intensity
     thermal_contrast = float(abs(mean_intensity - bg_mean))
 
-    # 5. Edge density (Canny edges / total pixels)
-    edges = cv2.Canny(gray_crop, 50, 150)
-    edge_density = float(np.sum(edges > 0)) / area if area > 0 else 0.0
+    # 4. Aspect ratio — mines are roughly circular (ratio ≈ 1.0)
+    aspect_ratio = float(w) / float(h) if h > 0 else 1.0
+
+    # 5. Radial Thermal Symmetry — mines are circular, heat diffuses radially
+    rts = compute_rts(gray_crop)
 
     # ── NEW FEATURES (6–10) ──────────────────────────────────────────────
 
-    # 6. Intensity standard deviation — mines are thermally more uniform
-    intensity_std = float(np.std(gray_crop))
+    # 6. LoG zero-crossing count — captures edge transitions at multiple scales
+    log_zero_crossings = compute_log_zero_crossings(gray_crop)
 
-    # 7. Aspect ratio — mines are roughly circular (ratio ≈ 1.0)
-    aspect_ratio = float(w) / float(h) if h > 0 else 1.0
+    # 7. LBP rotation-invariant — captures rotation-invariant texture patterns
+    lbp_ri = compute_lbp_ri(gray_crop)
 
-    # 8. Thermal gradient magnitude — sharp edges around buried mines
-    sobel_x = cv2.Sobel(gray_crop, cv2.CV_64F, 1, 0, ksize=3)
-    sobel_y = cv2.Sobel(gray_crop, cv2.CV_64F, 0, 1, ksize=3)
-    gradient_mag = np.sqrt(sobel_x**2 + sobel_y**2)
-    thermal_gradient = float(np.mean(gradient_mag))
+    # 8. DCT high-frequency energy ratio — captures sharpness / detail
+    dct_high_energy = compute_dct_high_energy(gray_crop)
 
-    # 9. Max/Min intensity ratio — captures extreme thermal contrast
-    min_val = float(np.min(gray_crop))
-    max_val = float(np.max(gray_crop))
-    max_min_ratio = max_val / (min_val + 1e-6)  # epsilon to avoid division by zero
+    # 9. Wavelet approximation coefficient energy — captures coarse structure
+    wavelet_approx = compute_wavelet_approx(gray_crop)
 
-    # 10. Relative size — area as fraction of full image
-    image_area = float(img_h * img_w)
-    relative_size = area / image_area if image_area > 0 else 0.0
+    # 10. Hole count (binary blobs inside object) — captures internal voids
+    hole_count = compute_hole_count(gray_crop)
 
     return {
         "area": area,
         "circularity": circularity,
-        "mean_intensity": mean_intensity,
         "thermal_contrast": thermal_contrast,
-        "edge_density": edge_density,
-        "intensity_std": intensity_std,
         "aspect_ratio": aspect_ratio,
-        "thermal_gradient": thermal_gradient,
-        "max_min_ratio": max_min_ratio,
-        "relative_size": relative_size,
+        "rts": rts,
+        "log_zero_crossings": log_zero_crossings,
+        "lbp_ri": lbp_ri,
+        "dct_high_energy": dct_high_energy,
+        "wavelet_approx": wavelet_approx,
+        "hole_count": hole_count,
     }
 
 
@@ -158,6 +156,9 @@ random.shuffle(all_xml)
 # ══════════════════════════════════════════════════════════════════════════
 mine_records = []
 mine_count = 0
+
+MAX_XML = None  # set to int for testing limit, None = full run
+all_xml = all_xml[:MAX_XML]
 
 print("\nPass 1 — extracting all mine samples…")
 for i, xml_path in enumerate(all_xml):
@@ -273,8 +274,8 @@ mine_count = len(mine_records)
 print(f"\nExtraction complete: {mine_count:,} mine samples | {bg_count:,} background samples")
 
 df = pd.DataFrame(records)
-df = df[["area", "circularity", "mean_intensity", "thermal_contrast", "edge_density",
-         "intensity_std", "aspect_ratio", "thermal_gradient", "max_min_ratio", "relative_size",
+df = df[["area", "circularity", "thermal_contrast", "aspect_ratio", "rts",
+         "log_zero_crossings", "lbp_ri", "dct_high_energy", "wavelet_approx", "hole_count",
          "label", "mine_type", "split", "source_file"]]
 
 df.to_csv(OUTPUT_CSV, index=False)
@@ -285,4 +286,4 @@ print(df["label"].value_counts())
 print("\nSplit distribution:")
 print(df["split"].value_counts())
 print("\nBasic stats:")
-print(df[["area", "circularity", "mean_intensity", "thermal_contrast", "edge_density"]].describe())
+print(df[["area", "circularity", "thermal_contrast", "aspect_ratio", "rts"]].describe())

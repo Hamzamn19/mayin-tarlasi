@@ -34,8 +34,8 @@ def main():
 
     # Features
     features = [
-        'area', 'circularity', 'mean_intensity', 'thermal_contrast', 'edge_density',
-        'intensity_std', 'aspect_ratio', 'thermal_gradient', 'max_min_ratio', 'relative_size'
+        'area', 'circularity', 'thermal_contrast', 'aspect_ratio', 'rts',
+        'log_zero_crossings', 'lbp_ri', 'dct_high_energy', 'wavelet_approx', 'hole_count'
     ]
     X_test_scaled = scaler.transform(test_det[features])
 

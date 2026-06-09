@@ -163,7 +163,7 @@ try:
     tabular_df = pd.read_csv(OUTPUTS_DIR / "landmine_tabular_dataV3.csv")
     
     top_features = ['area', 'circularity', 'thermal_contrast', 
-                   'intensity_std', 'thermal_gradient', 'max_min_ratio']
+                   'log_zero_crossings', 'lbp_ri', 'dct_high_energy']
     
     fig, axes = plt.subplots(2, 3, figsize=(15, 8))
     fig.suptitle('Feature Distributions: Mines (Red) vs Background (Blue)', 

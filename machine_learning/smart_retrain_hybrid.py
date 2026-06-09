@@ -20,8 +20,8 @@ def main():
     df = pd.read_csv(DATA_PATH)
     
     # Define features and label
-    features = ["area", "circularity", "mean_intensity", "thermal_contrast", "edge_density",
-                "intensity_std", "aspect_ratio", "thermal_gradient", "max_min_ratio", "relative_size",
+    features = ["area", "circularity", "thermal_contrast", "aspect_ratio", "rts",
+                "log_zero_crossings", "lbp_ri", "dct_high_energy", "wavelet_approx", "hole_count",
                 "confidence"]
     X = df[features]
     y = df["label"]

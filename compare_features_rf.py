@@ -40,7 +40,7 @@ def main():
     features_5 = ['area', 'circularity', 'mean_intensity', 'thermal_contrast', 'edge_density']
     
     # 10 features
-    features_10 = features_5 + ['intensity_std', 'aspect_ratio', 'thermal_gradient', 'max_min_ratio', 'relative_size']
+    features_10 = features_5 + ['aspect_ratio', 'rts', 'log_zero_crossings', 'lbp_ri', 'dct_high_energy']
     
     target = 'label'
     

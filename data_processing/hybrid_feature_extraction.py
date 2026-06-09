@@ -1,10 +1,14 @@
 import os
+import sys
 import cv2
 import numpy as np
 import pandas as pd
 import xml.etree.ElementTree as ET
 from tqdm import tqdm
 from pathlib import Path
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from data_processing.feature_functions import align_crop, robust_mask, compute_rts, compute_log_zero_crossings, compute_lbp_ri, compute_dct_high_energy, compute_wavelet_approx, compute_hole_count
 
 # Paths
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -35,12 +39,13 @@ def extract_features(crop, img_gray, xmin, ymin, xmax, ymax):
     if h < 3 or w < 3: return None
     
     gray_crop = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY) if crop.ndim == 3 else crop.copy()
+    gray_crop = align_crop(gray_crop)
     
     # 1. Area
     area = float(h * w)
     
     # 2. Circularity
-    _, binary = cv2.threshold(gray_crop, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    binary = robust_mask(gray_crop)
     contours, _ = cv2.findContours(binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     circularity = 0.0
     if contours:
@@ -50,15 +55,13 @@ def extract_features(crop, img_gray, xmin, ymin, xmax, ymax):
         if perimeter > 0:
             circularity = float(4 * np.pi * cnt_area / (perimeter ** 2))
             
-    # 3. Mean Intensity
-    mean_intensity = float(np.mean(gray_crop))
-    
-    # 4. Thermal Contrast (proportional padding)
+    # 3. Thermal Contrast (proportional padding)
     img_h, img_w = img_gray.shape[:2]
     pad = max(5, int(0.2 * max(h, w)))
     bx1, by1 = max(0, xmin - pad), max(0, ymin - pad)
     bx2, by2 = min(img_w, xmax + pad), min(img_h, ymax + pad)
     bg_region = img_gray[by1:by2, bx1:bx2].copy().astype(float)
+    mean_intensity = float(np.mean(gray_crop))
     obj_mask = np.zeros_like(bg_region, dtype=bool)
     oy1, ox1 = ymin - by1, xmin - bx1
     obj_mask[oy1:oy1 + h, ox1:ox1 + w] = True
@@ -66,33 +69,29 @@ def extract_features(crop, img_gray, xmin, ymin, xmax, ymax):
     bg_mean = float(np.mean(bg_pixels)) if bg_pixels.size > 0 else mean_intensity
     thermal_contrast = float(abs(mean_intensity - bg_mean))
     
-    # 5. Edge Density
-    edges = cv2.Canny(gray_crop, 50, 150)
-    edge_density = float(np.sum(edges > 0)) / area if area > 0 else 0.0
-
-    # 6. Intensity Std Dev
-    intensity_std = float(np.std(gray_crop))
-
-    # 7. Aspect Ratio
+    # 4. Aspect Ratio
     aspect_ratio = float(w) / float(h) if h > 0 else 1.0
 
-    # 8. Thermal Gradient Magnitude
-    sobel_x = cv2.Sobel(gray_crop, cv2.CV_64F, 1, 0, ksize=3)
-    sobel_y = cv2.Sobel(gray_crop, cv2.CV_64F, 0, 1, ksize=3)
-    gradient_mag = np.sqrt(sobel_x**2 + sobel_y**2)
-    thermal_gradient = float(np.mean(gradient_mag))
+    # 5. Radial Thermal Symmetry
+    rts = compute_rts(gray_crop)
 
-    # 9. Max/Min Intensity Ratio
-    min_val = float(np.min(gray_crop))
-    max_val = float(np.max(gray_crop))
-    max_min_ratio = max_val / (min_val + 1e-6)
+    # 6. LoG zero-crossing count
+    log_zero_crossings = compute_log_zero_crossings(gray_crop)
 
-    # 10. Relative Size
-    image_area = float(img_h * img_w)
-    relative_size = area / image_area if image_area > 0 else 0.0
+    # 7. LBP rotation-invariant
+    lbp_ri = compute_lbp_ri(gray_crop)
+
+    # 8. DCT high-frequency energy ratio
+    dct_high_energy = compute_dct_high_energy(gray_crop)
+
+    # 9. Wavelet approximation coefficient energy
+    wavelet_approx = compute_wavelet_approx(gray_crop)
+
+    # 10. Hole count (binary blobs inside object)
+    hole_count = compute_hole_count(gray_crop)
     
-    return [area, circularity, mean_intensity, thermal_contrast, edge_density,
-            intensity_std, aspect_ratio, thermal_gradient, max_min_ratio, relative_size]
+    return [area, circularity, thermal_contrast, aspect_ratio, rts,
+            log_zero_crossings, lbp_ri, dct_high_energy, wavelet_approx, hole_count]
 
 def parse_xml(xml_path):
     try:
@@ -170,8 +169,8 @@ def main():
                 records.append(features + [label, conf, img_name])
 
     df = pd.DataFrame(records, columns=[
-        "area", "circularity", "mean_intensity", "thermal_contrast", "edge_density",
-        "intensity_std", "aspect_ratio", "thermal_gradient", "max_min_ratio", "relative_size",
+        "area", "circularity", "thermal_contrast", "aspect_ratio", "rts",
+        "log_zero_crossings", "lbp_ri", "dct_high_energy", "wavelet_approx", "hole_count",
         "label", "confidence", "source_file"
     ])
     df.to_csv(OUTPUT_CSV, index=False)
