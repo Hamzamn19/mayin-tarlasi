@@ -444,6 +444,14 @@ The feature set was designed specifically for LWIR thermal imagery, but several 
 
 This paper presented a dual-stage hybrid pipeline for aerial landmine detection that combines the spatial localization capability of YOLO26 with the physical interpretability of a Random Forest classifier operating on ten handcrafted thermal and geometric features. The system achieves 91.9\% mAP@50 on the AMLID benchmark, a 5.1-point improvement over the published baseline, with the AP-Metal class improving by 65.3 points. The Random Forest verification gate reduces false positives by 31.7\% while maintaining 90.86\% recall, demonstrating that statistical verification of deep learning proposals produces a system that is both more precise and more reliable than either paradigm in isolation. At 20.3 MB and 204 FPS, the pipeline can be deployed on edge hardware for real-time UAS-based humanitarian demining operations.
 
+\section*{Author Contributions}
+
+H.S.A. conceived the dual-stage architecture, implemented the YOLO26 training pipeline and handcrafted feature extraction, conducted all experiments, and wrote the manuscript. Y.D.Z. trained and tuned the Random Forest and Logistic Regression classifiers. K.G. and E.T.K. assisted with experimental testing and result verification, and reviewed the manuscript providing feedback on the final version. All authors reviewed and approved the final version of the manuscript.
+
+\section*{Acknowledgements}
+
+The authors thank Assoc. Prof. Mustafa Cem Kasapba\c{s}{\i} (Department of Computer Engineering, Beykoz University) for his supervision of the CME6102 Estimation and Prediction course. The AMLID dataset used in this research was created by Gallagher and Oughton~\cite{gallagher2025} and is publicly available via Zenodo.
+
 \begin{thebibliography}{12}
 
 \bibitem{icbl2024}
