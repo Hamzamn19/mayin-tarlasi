@@ -208,11 +208,11 @@ plt.close()
 # ============================================
 print("🔧 Creating: Feature Importance Chart...")
 
-features = ['Thermal Contrast', 'Circularity', 'Radial Thermal Symmetry', 
-            'Aspect Ratio', 'Wavelet Approx', 'Area', 
-            'Hole Count', 'Edge Density', 'DCT High-Freq Energy', 'LBP Uniformity']
+features = ['Thermal Contrast', 'Circularity', 'Aspect Ratio', 
+            'Radial Thermal Symmetry (RTS)', 'Area', 'Wavelet Approximation Energy', 
+            'Internal Hole Count', 'LoG Zero-Crossings', 'DCT High-Frequency Energy', 'LBP Rotation-Invariant']
 # Real feature importances from trained Random Forest on 229,203 samples
-importance = np.array([0.281, 0.174, 0.098, 0.095, 0.079, 0.070, 0.062, 0.056, 0.049, 0.034])
+importance = np.array([0.3120, 0.1739, 0.0994, 0.0877, 0.0753, 0.0737, 0.0610, 0.0500, 0.0374, 0.0296])
 
 fig, ax = plt.subplots(figsize=(11, 7))
 

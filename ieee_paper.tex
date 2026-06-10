@@ -12,40 +12,19 @@
 \title{A Dual-Stage Hybrid Pipeline for Aerial Landmine Detection in LWIR Thermal Imagery}
 
 \author{
-  \IEEEauthorblockN{Hamzah Sheikh Alashrah$^{1}$}
+  \IEEEauthorblockN{Hamzah Sheikh Alashrah$^{1*}$, Yasin Deniz Zeybek$^{2}$, Kemal Gen\c{c}er$^{3}$, Emir Tayan\c{c} Kavak$^{4}$}
   \IEEEauthorblockA{
-    Department of Computer Engineering, Beykoz University\\
+     Department of Computer Engineering, Beykoz University\\
     Istanbul, Turkey\\
-    Email: hamzahsheikhalashrah@ogrenci.beykoz.edu.tr\\
-    Tel: +90 531 738 53 91
-  }
-  \and
-  \IEEEauthorblockN{Yasin Deniz Zeybek$^{2}$}
-  \IEEEauthorblockA{
-    Department of Computer Engineering, Beykoz University\\
-    Istanbul, Turkey\\
-    Email: YasinDenizZeybek@ogrenci.beykoz.edu.tr\\
-    Tel: +90 535 858 30 86
-  }
-  \and
-  \IEEEauthorblockN{Kemal Gen\c{c}er$^{3}$}
-  \IEEEauthorblockA{
-    Department of Computer Engineering, Beykoz University\\
-    Istanbul, Turkey\\
-    Email: KemalGencer@ogrenci.beykoz.edu.tr\\
-    Tel: +90 551 650 56 74
-  }
-  \and
-  \IEEEauthorblockN{Emir Tayan\c{c} Kavak$^{4}$}
-  \IEEEauthorblockA{
-    Department of Computer Engineering, Beykoz University\\
-    Istanbul, Turkey\\
-    Email: EmirTayancKavak@ogrenci.beykoz.edu.tr\\
-    Tel: +90 552 242 34 10
+    $^1$hamzahsheikhalashrah@ogrenci.beykoz.edu.tr\\
+    $^2$YasinDenizZeybek@ogrenci.beykoz.edu.tr\\
+    $^3$KemalGencer@ogrenci.beykoz.edu.tr\\
+    $^4$EmirTayancKavak@ogrenci.beykoz.edu.tr
   }
 }
 
 \maketitle
+\footnotetext{$^*$Corresponding author: Hamzah Sheikh Alashrah (hamzahsheikhalashrah@ogrenci.beykoz.edu.tr)}
 
 \begin{abstract}
 Thermal imaging from unmanned aerial systems (UAS) offers a stand-off modality for humanitarian demining, yet buried landmine signatures in long-wave infrared (LWIR) bands are easily confounded by environmental thermal clutter such as sun-heated rocks, vegetation, and soil temperature gradients. This paper presents a dual-stage hybrid pipeline that couples a YOLO26 one-stage detector with a Random Forest (RF) classifier operating on ten handcrafted thermal and geometric features. The first stage achieves 95.78\% recall on the 1,320-image AMLID test partition. The second stage filters false positives using features that encode shape compactness, radial thermal symmetry, edge structure, and frequency-domain texture, eliminating 31.7\% of false alarms (865 to 591) while maintaining 90.86\% recall. The combined system yields a peak overall mAP@50 of 91.9\%, a 5.1-point improvement over the published AMLID baseline, with the most challenging AP-Metal class rising from 19.3\% to 84.6\% mAP@50. The optimized model compresses to 20.3 MB under FP16 quantization and sustains 204 FPS inference, confirming viability for real-time UAS edge deployment.
@@ -104,7 +83,7 @@ YOLO26 Small~\cite{jocher2026yolo26} was selected as the base detector for its f
   \item \textbf{Pretrained weights:} YOLO26 Small ({\tt yolo26s.pt})
   \item \textbf{Input resolution:} 640 $\times$ 640 pixels
   \item \textbf{Batch size:} 32
-  \item \textbf{Epochs:} 50 (with early stopping patience of 15)
+  \item \textbf{Epochs:} 50 (early stopping patience of 15, not triggered; best checkpoint at epoch 49)
   \item \textbf{Optimizer:} AdamW (weights stripped post-training)
   \item \textbf{Workers:} 4
 \end{itemize}
@@ -409,7 +388,7 @@ A controlled ablation experiment compared the RF classifier trained on a five-fe
 
 The six additional features --- RTS, LoG zero-crossings (distinct from edge density: counts Laplacian sign changes rather than Gabor magnitude), LBP rotation-invariant uniformity, DCT high-frequency energy, wavelet approximation energy, and hole count --- reduced both false positives (by 12.8\%) and false negatives (by 24.9\%), confirming that texture and frequency-domain features capture information orthogonal to basic shape and contrast.
 
-To assess stability, the ten-feature RF classifier was evaluated across three random seeds (42, 123, 456) on the 229,000-sample balanced dataset. Results were consistent: Accuracy = 87.62\% $\pm$ 0.02\%, F1 = 87.38\% $\pm$ 0.02\%, Precision = 89.48\% $\pm$ 0.03\%, Recall = 85.38\% $\pm$ 0.01\% (mean $\pm$ std). The negligible variance confirms that the reported metrics are stable and not seed-dependent.
+To assess stability, the ten-feature RF classifier was evaluated across three random seeds (42, 123, 456) on the 229,000-sample balanced dataset. Results were consistent: Accuracy = 87.62\% $\pm$ 0.02\%, F1 = 87.38\% $\pm$ 0.02\%, Precision = 89.48\% $\pm$ 0.03\%, Recall = 85.38\% $\pm$ 0.01\% (mean $\pm$ std). Table~\ref{tab:ablation} reports the single-seed result (seed~=~42); the mean across three seeds is 87.62\% $\pm$ 0.02\%. The negligible variance confirms that the reported metrics are stable and not seed-dependent.
 
 \subsection{Edge Deployment Metrics}
 
