@@ -80,15 +80,15 @@ A principled alternative is to incorporate physically interpretable feature extr
 
 \subsection{Deep Object Detectors for Mine Detection}
 
-Modern one-stage detectors, particularly the YOLO family~\cite{redmon2016,jocher2026yolo26}, have been applied to landmine detection in LWIR imagery owing to their favorable speed-accuracy trade-off. Gallagher and Oughton~\cite{gallagher2025} trained YOLOv8 on the AMLID dataset and reported an overall mAP@50 of 86.8\%, but observed severe degradation on the AP-Metal class (19.3\% precision), attributing the failure to the small spatial footprint and low thermal contrast of anti-personnel mines. Cross~\cite{cross2020} applied Faster R-CNN to ground-penetrating radar data, while Sathish~et~al.~\cite{sathish2022} used RetinaNet on thermal side-scan imagery; both reported high false-alarm rates when thermal clutter resembled mine-sized objects. These results suggest that purely data-driven detectors lack the inductive bias needed to reject non-mine thermal anomalies.
+Modern one-stage detectors, particularly the YOLO family~\cite{redmon2016,jocher2026yolo26}, have been applied to landmine detection in LWIR imagery owing to their favorable speed-accuracy trade-off. Gallagher and Oughton~\cite{gallagher2025} trained YOLOv8 on the AMLID dataset and reported an overall mAP@50 of 86.8\%, but observed severe degradation on the AP-Metal class (19.3\% precision), attributing the failure to the small spatial footprint and low thermal contrast of anti-personnel mines. These results suggest that purely data-driven detectors lack the inductive bias needed to reject non-mine thermal anomalies.
 
 \subsection{Classical Feature-Based Detectors}
 
-Prior to the dominance of deep learning, landmine detection relied on statistical classifiers operating on engineered features. Heo~et~al.~\cite{heo2020} extracted texture features from forward-looking infrared (FLIR) imagery and achieved 82\% accuracy with a support vector machine, but only under controlled soil moisture conditions. Vinod~et~al.~\cite{vinod2020} used Gabor filter banks and gray-level co-occurrence matrices for mine vs.\ clutter discrimination, reporting high false-positive rates on heterogeneous terrain. The limitation of purely statistical approaches is their inability to exploit the spatial context that deep features capture. The present work bridges this gap by using deep features for region proposal and statistical features for verification, leveraging the complementary strengths of both paradigms.
+Prior to the dominance of deep learning, landmine detection relied on statistical classifiers operating on engineered features. The limitation of purely statistical approaches is their inability to exploit the spatial context that deep features capture. The present work bridges this gap by using deep features for region proposal and statistical features for verification, leveraging the complementary strengths of both paradigms.
 
 \subsection{Hybrid Architectures}
 
-Hybrid detector-verifier pipelines have been explored in medical imaging and industrial inspection. Diao~et~al.~\cite{diao2017} combined a CNN region proposer with a random forest for hyperspectral target detection, demonstrating that the verifier improved precision by 12\% at fixed recall. Closer to the present domain, Bharti~et~al.~\cite{bharti2022} appended a texture-based SVM after a YOLO detector for buried explosive detection in GPR data. The present work extends this paradigm to LWIR thermal imagery with a feature set specifically designed for the thermal and geometric properties of buried mines.
+Hybrid detector-verifier pipelines have been explored in medical imaging and industrial inspection. The present work extends this paradigm to LWIR thermal imagery with a feature set specifically designed for the thermal and geometric properties of buried mines.
 
 \section{Methodology}
 
@@ -452,7 +452,7 @@ H.S.A. conceived the dual-stage architecture, implemented the YOLO26 training pi
 
 The authors thank Assoc. Prof. Mustafa Cem Kasapba\c{s}{\i} (Department of Computer Engineering, Beykoz University) for his supervision of the CME6102 Estimation and Prediction course. The AMLID dataset used in this research was created by Gallagher and Oughton~\cite{gallagher2025} and is publicly available via Zenodo.
 
-\begin{thebibliography}{12}
+\begin{thebibliography}{6}
 
 \bibitem{icbl2024}
 International Campaign to Ban Landmines, \emph{Landmine Monitor 2024}. Geneva, Switzerland: ICBL, 2024.
@@ -471,24 +471,6 @@ J.~Redmon, S.~Divvala, R.~Girshick, and A.~Farhadi, ``You only look once: Unifie
 
 \bibitem{jocher2026yolo26}
 G.~Jocher, J.~Qiu, M.~Liu, S.~Lyu, F.~C.~Akyon, and M.~E.~Kalfaoglu, ``Ultralytics YOLO26: Unified Real-Time End-to-End Vision Models,'' 2026, arXiv:2606.03748.
-
-\bibitem{cross2020}
-G.~A. Cross, ``Detecting landmines with machine learning and ground-penetrating radar,'' \emph{J. Appl. Remote Sens.}, vol.~14, no.~2, p.~026503, 2020.
-
-\bibitem{sathish2022}
-P.~Sathish, M.~Rajesh, and S.~K. Majumder, ``Deep learning-based landmine detection using thermal side-scan imagery,'' \emph{IEEE Geosci. Remote Sens. Lett.}, vol.~19, pp.~1--5, 2022.
-
-\bibitem{heo2020}
-G.~Heo, J.~Kim, and S.~Lee, ``Landmine detection in FLIR imagery using texture features and SVM,'' \emph{Sensors}, vol.~20, no.~15, p.~4166, 2020.
-
-\bibitem{vinod2020}
-P.~Vinod, N.~K. Bose, and B.~Sridhar, ``Landmine detection in thermal images using Gabor filter bank and GLCM,'' \emph{Int. J. Remote Sens.}, vol.~41, no.~11, pp.~4158--4180, 2020.
-
-\bibitem{diao2017}
-W.~Diao, X.~Sun, and K.~Fu, ``Random forest ensemble with CNN for hyperspectral target detection,'' \emph{IEEE Trans. Geosci. Remote Sens.}, vol.~55, no.~8, pp.~4750--4763, 2017.
-
-\bibitem{bharti2022}
-R.~Bharti, D.~Gupta, and A.~K. Singh, ``Hybrid YOLO-SVM framework for buried explosive detection in GPR data,'' \emph{IEEE Trans. Instrum. Meas.}, vol.~71, pp.~1--12, 2022.
 
 \end{thebibliography}
 
