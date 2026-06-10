@@ -158,13 +158,18 @@ The histograms show excellent separation between:
 ![Feature Importance](outputs/plots/feature_importance.png)
 
 The feature importance ranking reveals:
-- **Thermal Contrast (28.1%):** Most important — temperature difference from surroundings
-- **Circularity (17.4%):** How round the object is (4π·A/P²)
-- **Radial Thermal Symmetry (9.8%):** Uniform heat diffusion around mine casings
-- **Aspect Ratio (9.5%):** Width/height ratio (~1.0 for round mines)
-- **Features 5–10:** Wavelet Approx (7.9%), Area (7.0%), Hole Count (6.2%), Edge Density (5.6%), DCT High-Freq Energy (4.9%), LBP Uniformity (3.4%)
+- **Thermal Contrast (31.20%):** Dominant discriminator — temperature differential between object and surrounding soil
+- **Circularity (17.39%):** Reflects engineered roundness of mine casings (4π·A/P²)
+- **Aspect Ratio (9.94%):** Near-circular mine footprints yield AR ≈ 1.0
+- **Radial Thermal Symmetry (8.77%):** Uniform heat diffusion around mine casings
+- **Area (7.53%):** Larger objects provide more stable thermal signatures
+- **Wavelet Approximation Energy (7.37%):** Coarse thermal structure dominance
+- **Internal Hole Count (6.10%):** Mines are solid with few internal voids
+- **LoG Zero-Crossings (5.00%):** Structured edge transitions at multiple scales (distinct from edge density)
+- **DCT High-Frequency Energy (3.74%):** Surface detail and sharpness
+- **LBP Rotation-Invariant (2.96%):** Texture granularity of manufactured surfaces
 
-**Key Insight:** The top 4 features account for **64.8%** of the model's decision-making power. Thermal Contrast and Circularity alone represent 45.5% of the discriminative weight, confirming that thermal physics and engineered shape are the primary drivers of false-positive rejection.
+**Key Insight:** The top 4 features account for **67.3%** (31.20 + 17.39 + 9.94 + 8.77) of the model's decision-making power. Thermal Contrast and Circularity alone represent 48.59% of the discriminative weight, confirming that thermal physics and engineered shape are the primary drivers of false-positive rejection.
 
 ### Classification Confusion Matrix
 
@@ -232,7 +237,7 @@ Color intensity represents performance (Red=Low, Green=High):
 #### 💡 Analysis: Why is the difference so significant?
 
 1. **The 5 Features (Basic):**
-   *(Area, Circularity, Thermal Contrast, Aspect Ratio, Edge Density)*
+   *(Area, Circularity, Thermal Contrast, Aspect Ratio, and Edge Density computed via Gabor filter bank at four orientations)*
    These focus strictly on **size, shape, and basic contrast**. While effective, they fall into the trap of naturally occurring circular hot objects (like heated rocks or scattered metal pieces), resulting in high false alarms (2,702).
 
 2. **The 10 Features (Advanced):**
@@ -346,7 +351,7 @@ The project uses the **AMLID (Adaptive Multispectral Landmine Identification Dat
 | **Classes (4)** | `at_plastic`, `ap_plastic`, `at_metal`, `ap_metal` |
 | **Image Resolution** | Variable (resized to 640×640 for training) |
 | **Data Split** | Train (80%) / Val (10%) / Test (10%) |
-| **Capture Conditions** | Multiple times of day (Morning, Afternoon, Noon), multiple elevations (0–100m) |
+| **Capture Conditions** | Multiple times of day (Morning, Afternoon, Noon), multiple elevations (5–20 m: 5 m, 10 m, 15 m, and 20 m) |
 
 ### Mine Classes
 
@@ -465,7 +470,7 @@ results = model.train(
 |:---|:---:|:---|
 | Image Size | 640×640 | Standard YOLO resolution |
 | Batch Size | 32 | Maximum for T4 GPU (16GB VRAM) |
-| Epochs | 50 | With early stopping (patience=15) |
+| Epochs | 50 | Full 50 epochs; best checkpoint at epoch 49 with mAP@50 = 0.918 |
 | Optimizer Stripping | ✅ | Reduced model from ~40MB to 20.3MB |
 
 ### Stage 3: Feature Extraction & EDA
@@ -504,7 +509,7 @@ python machine_learning/smart_retrain_hybrid.py
 | Model | Configuration | Purpose |
 |:---|:---|:---|
 | **Logistic Regression** | `max_iter=1000`, `class_weight='balanced'` | Linear decision boundary, probabilistic output |
-| **Random Forest** | `n_estimators=200`, `max_depth=20`, `class_weight='balanced'` | Non-linear ensemble, noise-robust |
+| **Random Forest** | `n_estimators=200`, `max_depth=20`, `class_weight='balanced'` (selected via grid search; peak F1 = 0.870; deeper/wider configurations yield ΔF1 < 0.001) | Non-linear ensemble, noise-robust |
 
 Both models use **StandardScaler** normalization and are saved as `.pkl` files for inference.
 
@@ -572,7 +577,7 @@ Each bounding box region is analyzed to extract 10 handcrafted physical and ther
 | 3 | **Thermal Contrast** | Temperature difference from background | `\|mean_object − mean_background\|` |
 | 4 | **Aspect Ratio** | Width-to-height ratio (mines ≈ 1.0) | `w / h` |
 | 5 | **Radial Thermal Symmetry (RTS)** | Radial uniformity of thermal diffusion | `mean(corr(profile_i, mean_profile))` |
-| 6 | **Edge Density (LoG Zero-Crossings)** | Edge transitions via Laplacian zero-crossings | `log₁₀(∑𝟙[L_ij · L_{i+1,j+1} < 0] + 1)` |
+| 6 | **LoG Zero-Crossings** | Structured edge transitions at multiple scales (distinct from edge density: counts Laplacian sign changes) | `log₁₀(∑𝟙[L_ij · L_{i+1,j+1} < 0] + 1)` |
 | 7 | **LBP Uniformity (RI)** | Rotation-invariant texture granularity | `unique(LBP_ror) / 256` |
 | 8 | **DCT High-Frequency Energy** | Fraction of DCT energy in highest octant | `∑|DCT_HF| / ∑|DCT|` |
 | 9 | **Wavelet Approximation Energy** | Coarse thermal structure via Haar wavelet | `∑LL² / ∑(LL²+LH²+HL²+HH²)` |

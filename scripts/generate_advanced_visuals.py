@@ -222,7 +222,7 @@ bars = ax.barh(features, importance * 100, color=colors, edgecolor='black', line
 ax.set_xlabel('Importance Score (%)', fontsize=12, fontweight='bold')
 ax.set_title('Random Forest Feature Importance\n(Top 10 Features for Mine Detection)', 
             fontsize=13, fontweight='bold', pad=20)
-ax.set_xlim(0, 20)
+ax.set_xlim(0, 35)
 
 # Add value labels
 for i, (bar, val) in enumerate(zip(bars, importance * 100)):

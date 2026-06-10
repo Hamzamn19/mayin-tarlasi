@@ -33,3 +33,4 @@ nextjs-app/.env.test.local
 !outputs/scaler.pkl
 # random_forest_model.pkl is too large for GitHub (>100MB)
 outputs/random_forest_model.pkl
+docs/ref_images
