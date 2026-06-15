@@ -16,57 +16,53 @@
   \IEEEauthorblockA{
     Department of Computer Engineering, Beykoz University\\
     Istanbul, Turkey\\
-    Email: hamzahsheikhalashrah@ogrenci.beykoz.edu.tr\\
-    Tel: +90 531 738 53 91
+    Email: hamzahsheikhalashrah@ogrenci.beykoz.edu.tr
   }
   \and
   \IEEEauthorblockN{Yasin Deniz Zeybek$^{2}$}
   \IEEEauthorblockA{
     Department of Computer Engineering, Beykoz University\\
     Istanbul, Turkey\\
-    Email: YasinDenizZeybek@ogrenci.beykoz.edu.tr\\
-    Tel: +90 535 858 30 86
+    Email: YasinDenizZeybek@ogrenci.beykoz.edu.tr
   }
   \and
   \IEEEauthorblockN{Kemal Gen\c{c}er$^{3}$}
   \IEEEauthorblockA{
     Department of Computer Engineering, Beykoz University\\
     Istanbul, Turkey\\
-    Email: KemalGencer@ogrenci.beykoz.edu.tr\\
-    Tel: +90 551 650 56 74
+    Email: KemalGencer@ogrenci.beykoz.edu.tr
   }
   \and
   \IEEEauthorblockN{Emir Tayan\c{c} Kavak$^{4}$}
   \IEEEauthorblockA{
     Department of Computer Engineering, Beykoz University\\
     Istanbul, Turkey\\
-    Email: EmirTayancKavak@ogrenci.beykoz.edu.tr\\
-    Tel: +90 552 242 34 10
+    Email: EmirTayancKavak@ogrenci.beykoz.edu.tr
   }
 }
 
 \maketitle
 
 \begin{abstract}
-Thermal imaging from unmanned aerial systems (UAS) offers a stand-off modality for humanitarian demining, yet buried landmine signatures in long-wave infrared (LWIR) bands are easily confounded by environmental thermal clutter such as sun-heated rocks, vegetation, and soil temperature gradients. This paper presents a dual-stage hybrid pipeline that couples a YOLO26 one-stage detector with a Random Forest (RF) classifier operating on ten handcrafted thermal and geometric features. The first stage achieves 95.78\% recall on the 1,320-image AMLID test partition. The second stage filters false positives using features that encode shape compactness, radial thermal symmetry, edge structure, and frequency-domain texture, eliminating 31.7\% of false alarms (865 to 591) while maintaining 90.86\% recall. The combined system yields a peak overall mAP@50 of 91.9\%, a 5.1-point improvement over the published AMLID baseline, with the most challenging AP-Metal class rising from 19.3\% to 84.6\% mAP@50. The optimized model compresses to 20.3 MB under FP16 quantization and sustains 204 FPS inference, confirming viability for real-time UAS edge deployment.
+Thermal imaging from unmanned aerial systems (UAS) offers a stand-off modality for humanitarian demining, yet buried landmine signatures in long-wave infrared (LWIR) bands are easily confounded by environmental thermal clutter such as sun-heated rocks, vegetation, and soil temperature gradients. This paper presents a dual-stage hybrid pipeline that couples a YOLO26 one-stage detector with a Random Forest (RF) classifier operating on ten handcrafted thermal and geometric features. The first stage achieves 95.78\% recall on the 1,320-image AMLID test partition. The second stage filters false positives using features that encode shape compactness, radial thermal symmetry, edge structure, and frequency-domain texture, reducing false alarms by 31.7\% (865 to 591) while maintaining 90.86\% recall. The combined system yields a peak overall mAP@50 of 91.9\%, and the AP-Metal class achieved 84.6\% mAP@50. The AMLID paper reports 19.3\% Precision@50 for the same class, but these metrics are not directly comparable. The optimized model compresses to 20.3 MB under FP16 quantization and sustains 204 FPS inference, supporting low-latency edge inference.
 \end{abstract}
 
 \section{Introduction}
 
-Landmines remain a persistent humanitarian threat across more than 60 countries, with an estimated 110 million buried devices causing thousands of casualties annually~\cite{icbl2024}. Airborne thermal imaging has emerged as a promising stand-off detection modality, as buried mines alter the thermal conductivity and heat capacity of the overlying soil layer, producing a measurable surface temperature differential in LWIR bands~\cite{mcfee1999,lopez2004}. The AMLID (Adaptive Multispectral Landmine Identification Dataset) corpus~\cite{gallagher2025} provides a standardized benchmark of 12,078 LWIR frames annotated across four mine classes (AT-Plastic, AT-Metal, AP-Plastic, AP-Metal), enabling reproducible comparison of detection architectures; eleven frames were excluded during preprocessing due to corrupt or unreadable file headers, yielding 12,067 usable images.
+Landmines remain a persistent humanitarian threat across more than 60 countries, with an estimated 110 million buried devices causing thousands of casualties annually~\cite{icbl2024}. Airborne thermal imaging provides a stand-off detection modality, as buried mines alter the thermal conductivity and heat capacity of the overlying soil layer, producing a measurable surface temperature differential in LWIR bands~\cite{mcfee1999,lopez2004,cremer2002}. The AMLID (Adaptive Multispectral Landmine Identification Dataset) corpus~\cite{gallagher2025} provides a standardized benchmark of 12,078 LWIR frames annotated across four mine classes (AT-Plastic, AT-Metal, AP-Plastic, AP-Metal), enabling reproducible comparison of detection architectures.
 
-Deep convolutional detectors such as YOLO~\cite{redmon2016} have demonstrated strong spatial localization on this task, yet they remain vulnerable to thermal environmental clutter. Sun-heated rocks, compacted soil patches, and metallic debris produce thermal signatures whose spatial statistics partially overlap with those of mine simulants, leading to elevated false-positive rates. The published AMLID baseline~\cite{gallagher2025} reports a YOLOv8 model achieving 86.8\% mean average precision (mAP@50), with per-class precision for the AP-Metal category falling to 19.3\% --- a level insufficient for operational deployment, where false alarms erode operator trust and slow clearance operations.
+Deep convolutional detectors such as YOLO~\cite{redmon2016} achieve spatial localization on this task, yet they remain vulnerable to thermal environmental clutter. Sun-heated rocks, compacted soil patches, and metallic debris produce thermal signatures whose spatial statistics partially overlap with those of mine simulants, leading to elevated false-positive rates. The published AMLID baseline~\cite{gallagher2025} reports a YOLOv8~\cite{jocher2023yolov8} model achieving 86.8\% mean average precision (mAP@50), with per-class precision for the AP-Metal category falling to 19.3\% --- a level insufficient for operational deployment.
 
-A principled alternative is to incorporate physically interpretable feature extractors between the detector and the final classifier. While deep learning learns representations end-to-end, handcrafted features grounded in the known physics of buried mine signatures --- circular shape, uniform thermal distribution, radial heat diffusion symmetry, and engineered edge geometry --- can act as a hard geometric and thermodynamic gate against natural clutter. This work develops a dual-stage architecture in which a YOLO26 Small network proposes candidate regions at high recall, and a Random Forest classifier subsequently verifies each proposal against ten handcrafted features. The contributions are:
+This work develops a dual-stage architecture in which a YOLO26 Small network proposes candidate regions at high recall, and a Random Forest classifier subsequently verifies each proposal against ten handcrafted features. Handcrafted features grounded in the known physics of buried mine signatures --- circular shape, uniform thermal distribution, radial heat diffusion symmetry, and engineered edge geometry --- act as a geometric and thermodynamic gate against natural clutter. The contributions are:
 
 \begin{enumerate}
-  \item A YOLO26 detector trained on the full AMLID split achieving 91.9\% mAP@50, with per-class mAP@50 of 99.1\% (AT-Plastic), 97.4\% (AT-Metal), 86.7\% (AP-Plastic), and 84.6\% (AP-Metal), as illustrated in Fig.~\ref{fig:pipeline}.
+  \item A YOLO26 detector evaluated on the AMLID test partition achieving 91.9\% mAP@50, with per-class mAP@50 of 99.1\% (AT-Plastic), 97.4\% (AT-Metal), 86.7\% (AP-Plastic), and 84.6\% (AP-Metal).
 
   \item A geometric-physics feature set comprising ten interpretable measurements --- area, circularity, thermal contrast, aspect ratio, radial thermal symmetry, Laplacian-of-Gaussian zero-crossing count, rotation-invariant local binary patterns, DCT high-frequency energy ratio, wavelet approximation energy, and internal hole count --- each designed to encode a distinct physical property of buried mine signatures.
 
-  \item A soft-voting ensemble mechanism that fuses YOLO confidence with RF probability, reducing false positives by 31.7\% (865 to 591) and achieving a system-level F1 score of 93.27\%.
+  \item A soft-voting ensemble that fuses YOLO confidence with RF probability, reducing false positives by 31.7\% (865 to 591) and achieving a system-level F1 score of 93.27\%.
 
-  \item An edge-deployable model at 20.3 MB running at 204 FPS on a Tesla T4 GPU, demonstrating operational readiness for UAS-mounted inference.
+  \item A compact model at 20.3 MB running at 204 FPS on a Tesla T4 GPU, supporting low-latency UAS-mounted inference.
 \end{enumerate}
 
 \begin{figure}[t]
@@ -80,25 +76,25 @@ A principled alternative is to incorporate physically interpretable feature extr
 
 \subsection{Deep Object Detectors for Mine Detection}
 
-Modern one-stage detectors, particularly the YOLO family~\cite{redmon2016,jocher2026yolo26}, have been applied to landmine detection in LWIR imagery owing to their favorable speed-accuracy trade-off. Gallagher and Oughton~\cite{gallagher2025} trained YOLOv8 on the AMLID dataset and reported an overall mAP@50 of 86.8\%, but observed severe degradation on the AP-Metal class (19.3\% precision), attributing the failure to the small spatial footprint and low thermal contrast of anti-personnel mines. These results suggest that purely data-driven detectors lack the inductive bias needed to reject non-mine thermal anomalies.
+One-stage detectors, particularly the YOLO family~\cite{redmon2016,jocher2026yolo26}, have been applied to landmine detection in LWIR imagery owing to their speed-accuracy trade-off. Gallagher and Oughton~\cite{gallagher2025} trained YOLOv8 on the AMLID dataset and reported an overall mAP@50 of 86.8\%, but observed severe degradation on the AP-Metal class (19.3\% precision), attributing the failure to the small spatial footprint and low thermal contrast of anti-personnel mines. Beyond the YOLO family, single-shot detectors such as SSD~\cite{liu2016} offer comparable speed with multi-scale feature maps, while transformer-based detectors like DETR~\cite{carion2020} eliminate hand-designed components such as anchor boxes and non-maximum suppression. More recent Ultralytics models (YOLOv8~\cite{jocher2023yolov8}, YOLO11, YOLO26) continue to improve the speed-accuracy frontier, though their application to thermal mine detection remains relatively unexplored. These results suggest that purely data-driven detectors lack the inductive bias needed to reject non-mine thermal anomalies.
 
 \subsection{Classical Feature-Based Detectors}
 
-Prior to the dominance of deep learning, landmine detection relied on statistical classifiers operating on engineered features. The limitation of purely statistical approaches is their inability to exploit the spatial context that deep features capture. The present work bridges this gap by using deep features for region proposal and statistical features for verification, leveraging the complementary strengths of both paradigms.
+Prior to the dominance of deep learning, landmine detection relied on statistical classifiers operating on engineered features. Lopez et al.~\cite{lopez2004} modeled thermal contrast of buried mines using heat-transfer analysis, while Cremer et al.~\cite{cremer2002} applied Hough transform and morphological filters to extract circularity and shape features from thermal IR images. Random Forests (RF)~\cite{breiman2001} have been widely adopted for classification in computer vision due to their robustness to high-dimensional feature spaces and built-in feature importance ranking. These methods offer interpretability but lack the spatial context that deep features capture.
 
-\subsection{Hybrid Architectures}
+\subsection{Hybrid and UAV-Based Detection}
 
-Hybrid detector-verifier pipelines have been explored in medical imaging and industrial inspection. The present work extends this paradigm to LWIR thermal imagery with a feature set specifically designed for the thermal and geometric properties of buried mines.
+UAV-based platforms have gained attention for large-area minefield survey. Bajić and Potočnik~\cite{bajic2023} applied YOLOv5 to thermal UAV imagery for unexploded ordnance (UXO) detection across eleven classes, achieving high per-class detection rates. Qiu et al.~\cite{qiu2023} proposed a detection-driven multispectral fusion framework using YOLOv5 for UAV-borne scatterable landmine detection, demonstrating that combining spectral bands improves recall under occlusion. Hybrid detector-verifier pipelines have also been explored in medical imaging and industrial inspection, where a deep detector proposes regions and a shallow classifier verifies them. This work applies this paradigm to LWIR thermal imagery, using a feature set designed for the thermal and geometric properties of buried mines.
 
 \section{Methodology}
 
 \subsection{Dataset and Preprocessing}
 
-The AMLID corpus~\cite{gallagher2025} comprises 12,078 LWIR thermal images collected across multiple months, times of day (post-sunrise, noon, pre-sunset), and UAS elevations (5--20~m: 5~m, 10~m, 15~m, 20~m); eleven frames were excluded during preprocessing due to corrupt or unreadable file headers, yielding 12,067 usable images. Annotations follow the Pascal VOC format with four classes: AT-Plastic, AT-Metal, AP-Plastic, and AP-Metal. The hierarchical directory structure was flattened into unique filenames encoding capture parameters (e.g., {\tt Jan\_Jan\_Afternoon\_10\_lwir\_3.jpg}). Following the AMLID benchmark protocol~\cite{gallagher2025}, the official test partition of 1,320 images was used for all reported evaluations. The remaining 10,758 images were divided 90/10 into training (9,654 images) and validation (1,206 images) subsets for hyperparameter selection and early stopping. All images were resized to 640$\times$640 pixels for YOLO training while preserving the original aspect ratio with letterbox padding.
+The AMLID corpus~\cite{gallagher2025} comprises 12,078 LWIR thermal images collected across multiple months, times of day (post-sunrise, noon, pre-sunset), and UAS elevations (5--20~m: 5~m, 10~m, 15~m, 20~m). Annotations follow the Pascal VOC format with four classes: AT-Plastic, AT-Metal, AP-Plastic, and AP-Metal. The hierarchical directory structure was flattened into unique filenames encoding capture parameters (e.g., {\tt Jan\_Jan\_Afternoon\_10\_lwir\_3.jpg}). Following the AMLID benchmark protocol~\cite{gallagher2025}, the official test partition of 1,320 images (14,905 ground-truth instances) was used for all reported evaluations. The remaining 10,758 images were split into 9,682 training and 1,076 validation images (approximately 90/10) for hyperparameter selection and early stopping. All images were resized to 640$\times$640 pixels for YOLO training while preserving the original aspect ratio with letterbox padding.
 
 \subsection{Stage 1 --- YOLO26 One-Stage Detector}
 
-YOLO26 Small~\cite{jocher2026yolo26} was selected as the base detector for its favorable balance of inference speed and detection accuracy. Training was performed on a single Tesla T4 GPU (16 GB VRAM) via Kaggle with the following configuration:
+YOLO26 Small~\cite{jocher2026yolo26} was selected as the base detector for its balance of inference speed and detection accuracy. YOLO26 is the latest release in the YOLO series at the time of this work, incorporating architectural improvements over prior versions. A systematic comparison across YOLO versions (v8, v11, etc.) and alternative architectures such as RT-DETR is left as future work, as the primary focus here is the hybrid pipeline design rather than detector selection. Training was performed on a single Tesla T4 GPU (16 GB VRAM) via Kaggle with the following configuration:
 
 \begin{itemize}
   \item \textbf{Pretrained weights:} YOLO26 Small ({\tt yolo26s.pt})
@@ -109,7 +105,7 @@ YOLO26 Small~\cite{jocher2026yolo26} was selected as the base detector for its f
   \item \textbf{Workers:} 4
 \end{itemize}
 
-Training loss and mAP@50 curves across all 50 epochs are shown in Fig.~\ref{fig:training_curves}, confirming smooth convergence without overfitting.
+Training loss and mAP@50 curves across all 50 epochs are shown in Fig.~\ref{fig:training_curves}.
 
 Training ran for the full 50 epochs; the best checkpoint was recorded at epoch 49 with mAP@50 = 0.918, precision = 0.907, and recall = 0.876. Post-training weight pruning removed optimizer states, compressing the checkpoint from 40 MB to 20.3 MB. The dataset configuration file specified four detection classes with paths to the training and validation partitions.
 
@@ -123,7 +119,7 @@ Training ran for the full 50 epochs; the best checkpoint was recorded at epoch 4
 \begin{figure}[t]
   \centering
   \includegraphics[width=\columnwidth]{figures/results.png}
-  \caption{YOLO26 Small training curves over 50 epochs. Box loss, classification loss, and mAP@50 converge smoothly; best mAP@50 = 0.918 is recorded at epoch 49.}
+  \caption{YOLO26 Small training curves over 50 epochs. Box loss, classification loss, and mAP@50; best mAP@50 = 0.918 is recorded at epoch 49.}
   \label{fig:training_curves}
 \end{figure}
 
@@ -209,7 +205,7 @@ Mines are solid objects with few internal voids; natural clutter often contains 
 
 \subsection{Random Forest Verification Classifier}
 
-The Random Forest classifier was trained on the ten features extracted from the full balanced dataset. Hyperparameters were:
+The Random Forest~\cite{breiman2001} classifier was trained on the ten features extracted from a balanced dataset of approximately 229,000 samples (~114,500 positive mine instances and ~114,500 negative background patches). Hyperparameters were:
 \begin{itemize}
   \item \textbf{Number of trees:} 200, \textbf{Maximum depth:} 20 (selected via grid search; see Table~\ref{tab:rf_ablation})
   \item \textbf{Class weight:} balanced (inverse proportion to class frequencies)
@@ -280,26 +276,26 @@ For deployment, a simplified ensemble was used:
 
 \subsection{YOLO26 Detection Performance}
 
-The YOLO26 Small detector achieved an overall mAP@50 of 91.9\% on the held-out test split. Per-class performance is reported in Table~\ref{tab:per_class}.
+The YOLO26 Small detector achieved an overall mAP@50 of 91.9\% on the held-out test split (single training run; fixed seed 42). Per-class performance is reported in Table~\ref{tab:per_class}.
 
 \begin{table}[t]
   \centering
   \caption{Per-class mAP@50 for YOLO26 Small on AMLID test partition}
   \label{tab:per_class}
-  \begin{tabular}{lcc}
+  \begin{tabular}{lccc}
     \hline
-    \textbf{Class} & \textbf{mAP@50} & \textbf{Class Dist. (\%)} \\
+    \textbf{Class} & \textbf{mAP@50} & \textbf{Count} & \textbf{Dist. (\%)} \\
     \hline
-    AT-Plastic & 99.1\% & 67.3\% \\
-    AT-Metal   & 97.4\% & 11.9\% \\
-    AP-Plastic & 86.7\% & 12.0\% \\
-    AP-Metal   & 84.6\% & 8.9\% \\
+    AT-Plastic & 99.1\% & 10,031 & 67.3\% \\
+    AT-Metal   & 97.4\% & 1,774 & 11.9\% \\
+    AP-Plastic & 86.7\% & 1,789 & 12.0\% \\
+    AP-Metal   & 84.6\% & 1,311 & 8.8\% \\
     \hline
   \end{tabular}\\[4pt]
-  {\footnotesize Note: Percentages computed over the 14,905 ground-truth instances in the AMLID standard test partition.}
+  {\footnotesize Note: Counts and percentages over the 14,905 ground-truth instances in the AMLID standard test partition.}
 \end{table}
 
-AT-Plastic mines have the largest spatial footprint ($\sim$40--60 px at 640$\times$640 resolution), producing strong thermal features and the highest detection accuracy. AP-Metal mines are the smallest ($\sim$12--20 px) and exhibit the lowest thermal contrast due to rapid heat conduction through the metal casing, resulting in a 14.5-point mAP@50 gap. Nevertheless, the 84.6\% mAP@50 represents a 65.3-point improvement over the published AMLID baseline of 19.3\% for AP-Metal~\cite{gallagher2025}.
+AT-Plastic mines are the largest class ($\sim$40--60 px at 640$\times$640), producing the strongest thermal features and highest mAP@50. AP-Metal mines are the smallest ($\sim$12--20 px) with the lowest thermal contrast due to rapid heat conduction through the metal casing. The AP-Metal class achieved 84.6\% mAP@50. The AMLID paper reports 19.3\% Precision@50 for the same class~\cite{gallagher2025}, but these metrics are not directly comparable.
 
 \subsection{Comparison with AMLID Baseline}
 
@@ -322,10 +318,10 @@ Table~\ref{tab:comparison} compares the proposed system against the published AM
     Model size        & $\sim$50 MB  & 20.3 MB   & $-$59\% \\
     \hline
   \end{tabular}\\[4pt]
-  {\footnotesize Note: AMLID baseline per-class values are reported as Precision@50 as published in~\cite{gallagher2025}; proposed system values are mAP@50. Direct per-metric comparison should be interpreted with this distinction.}
+  {\footnotesize Note: The AMLID baseline reports Precision@50 per class~\cite{gallagher2025}, while the proposed system reports mAP@50. These metrics are not directly equivalent; the comparison is presented for reference and should be interpreted with caution. The primary contribution of this work is the hybrid pipeline architecture and its internal validation, not a controlled head-to-head benchmark against the baseline.}
 \end{table}
 
-The 65.3-point improvement on AP-Metal is the most operationally significant finding; the hybrid pipeline transforms the least reliable detection class into one approaching field-deployable performance.
+The AP-Metal class achieved 84.6\% mAP@50. The AMLID paper reports 19.3\% Precision@50 for the same class~\cite{gallagher2025}, but these metrics are not directly comparable. The pipeline operates effectively on small, low-contrast mine types.
 
 \subsection{Hybrid Ensemble Evaluation}
 
@@ -333,7 +329,7 @@ The six inference strategies were evaluated on the complete test set of 1,320 im
 
 \begin{table}[t]
   \centering
-  \caption{Hybrid ensemble evaluation on AMLID test partition (1,320 images, 14,905 GT mines)}
+  \caption{Hybrid ensemble evaluation on AMLID test partition (1,320 images, 14,905 GT mines). Results are from a single evaluation of the trained YOLO26 model and RF/LR classifiers.}
   \label{tab:ensemble}
   \begin{tabular}{lcccrrr}
     \hline
@@ -349,14 +345,14 @@ The six inference strategies were evaluated on the complete test set of 1,320 im
   \end{tabular}
 \end{table}
 
-The YOLO-only baseline operates at the high-recall regime (95.78\%), which is desirable for a safety-critical detector (undetected mines pose a greater risk than false alarms). However, its 865 false positives would require manual verification in the field. The Random Forest filter reduced false positives to 591 --- a 31.7\% reduction --- while maintaining 90.86\% recall. The 71.1\% of false positives that were eliminated correspond primarily to sun-heated rocks and metallic debris whose thermal signatures initially triggered YOLO but whose geometric and thermal features failed the RF verification gate.
+The YOLO-only baseline operates at the high-recall regime (95.78\%), which is relevant for a safety-critical detector (undetected mines pose a greater risk than false alarms). However, its 865 false positives would require manual verification in the field. The Random Forest filter reduced false positives to 591 --- a 31.7\% reduction (274 fewer FPs) --- while maintaining 90.86\% recall. The eliminated false positives correspond primarily to sun-heated rocks and metallic debris whose thermal signatures initially triggered YOLO but whose geometric and thermal features failed the RF verification gate.
 
-The YOLO+RF configuration achieved the highest precision (95.82\%) among all strategies that maintained recall above 90\%, making it the recommended production configuration. The ensemble soft-weighted approach (F1 = 92.56\%) is a viable alternative when a tunable precision-recall trade-off is desired. Logistic Regression alone (F1 = 80.02\%) performed poorly, consistent with the expectation that linear decision boundaries cannot separate the non-linear thermal feature space of mine vs.\ clutter.
+The YOLO+RF configuration achieved the highest precision (95.82\%) among all strategies that maintained recall above 90\%. The ensemble soft-weighted approach (F1 = 92.56\%) is an alternative when a tunable precision-recall trade-off is desired. Logistic Regression alone (F1 = 80.02\%) achieved lower performance, consistent with the expectation that linear decision boundaries cannot separate the non-linear thermal feature space of mine vs.\ clutter.
 
 \begin{figure}[t]
   \centering
   \includegraphics[width=\columnwidth]{outputs/plots/confusion_matrix.png}
-  \caption{Confusion matrix for YOLO26 classification across four mine types, demonstrating 90.9\% accuracy on the most challenging AP-Metal class.}
+  \caption{Confusion matrix for YOLO26 classification across four mine types. Per-class accuracy for AP-Metal is 90.9\%.}
   \label{fig:confusion}
 \end{figure}
 
@@ -377,12 +373,12 @@ Feature importance was derived from mean decrease in impurity across the 200-tre
   \item \textbf{LBP Rotation-Invariant} (2.96\%) --- texture granularity of manufactured surfaces.
 \end{enumerate}
 
-The cumulative importance of the top four features was 67.3\% (31.20 + 17.39 + 9.94 + 8.77), with the remaining six features contributing redundancy and robustness against sensor noise and environmental variation. The RTS and DCT high-frequency features, in particular, provided complementary information: RTS captures large-scale thermal geometry, while DCT energy captures fine-grained surface structure.
+The top four features account for 67.3\% of total importance (31.20 + 17.39 + 9.94 + 8.77), with the remaining six providing redundancy against sensor noise and environmental variation.
 
 \begin{figure}[t]
   \centering
   \includegraphics[width=\columnwidth]{outputs/plots/feature_importance.png}
-  \caption{Random Forest feature importance ranking. Thermal Contrast (31.20\%) and Circularity (17.39\%) are the dominant discriminators, confirming that thermal physics and engineered shape drive detection decisions.}
+  \caption{Random Forest feature importance ranking. Thermal Contrast (31.20\%) and Circularity (17.39\%) are the dominant discriminators.}
   \label{fig:importance}
 \end{figure}
 
@@ -409,11 +405,11 @@ A controlled ablation experiment compared the RF classifier trained on a five-fe
 
 The six additional features --- RTS, LoG zero-crossings (distinct from edge density: counts Laplacian sign changes rather than Gabor magnitude), LBP rotation-invariant uniformity, DCT high-frequency energy, wavelet approximation energy, and hole count --- reduced both false positives (by 12.8\%) and false negatives (by 24.9\%), confirming that texture and frequency-domain features capture information orthogonal to basic shape and contrast.
 
-To assess stability, the ten-feature RF classifier was evaluated across three random seeds (42, 123, 456) on the 229,000-sample balanced dataset. Results were consistent: Accuracy = 87.62\% $\pm$ 0.02\%, F1 = 87.38\% $\pm$ 0.02\%, Precision = 89.48\% $\pm$ 0.03\%, Recall = 85.38\% $\pm$ 0.01\% (mean $\pm$ std). Table~\ref{tab:ablation} reports the single-seed result (seed~=~42); the mean across three seeds is 87.62\% $\pm$ 0.02\%. The negligible variance confirms that the reported metrics are stable and not seed-dependent.
+To assess stability, the ten-feature RF classifier was evaluated across three random seeds (42, 123, 456) on the 229,000-sample balanced dataset. Results were consistent: Accuracy = 87.62\% $\pm$ 0.02\%, F1 = 87.38\% $\pm$ 0.02\%, Precision = 89.48\% $\pm$ 0.03\%, Recall = 85.38\% $\pm$ 0.01\% (mean $\pm$ std). Table~\ref{tab:ablation} reports the single-seed result (seed~=~42); the mean across three seeds is 87.62\% $\pm$ 0.02\%. The low variance confirms that the reported metrics are stable and not seed-dependent.
 
 \subsection{Edge Deployment Metrics}
 
-The optimized YOLO26 Small checkpoint (20.3 MB after FP16 weight quantization and optimizer-state stripping) achieved a measured inference throughput of 204 FPS (4.9 ms per 640$\times$640 frame) on a Tesla T4 GPU. The Random Forest inference (200 trees, 10 features) added less than 0.3 ms per detection, making the effective pipeline latency indistinguishable from the YOLO-only baseline. The total model footprint of 20.3 MB is readily deployable on edge platforms such as the NVIDIA Jetson series via TensorRT INT8 optimization.
+The optimized YOLO26 Small checkpoint (20.3 MB after FP16 weight quantization and optimizer-state stripping) achieved a measured inference throughput of 204 FPS (4.9 ms per 640$\times$640 frame) on a Tesla T4 GPU. The Random Forest inference (200 trees, 10 features) added less than 0.3 ms per detection, making the effective pipeline latency indistinguishable from the YOLO-only baseline. The total model footprint of 20.3 MB is suitable for edge platforms such as the NVIDIA Jetson series via TensorRT INT8 optimization, consistent with known model compression and efficient inference techniques~\cite{howard2017,sze2017}.
 
 \begin{figure}[t]
   \centering
@@ -426,23 +422,27 @@ The optimized YOLO26 Small checkpoint (20.3 MB after FP16 weight quantization an
 
 \subsection{The Role of Statistical Verification}
 
-The results demonstrate that a carefully designed statistical verification stage can substantially improve the precision of a deep learning detector without sacrificing the recall required for safety-critical operation. The key insight is that the two stages operate on complementary information: YOLO learns spatial patterns from the full image context, while the RF makes decisions on ten physically interpretable features extracted from each isolated crop. When YOLO misclassifies a sun-heated rock as a mine, the error originates from global shape and intensity patterns that superficially resemble those of a mine casing. The RF, operating on features designed to capture the thermal physics and geometric precision of engineered objects, rejects such false positives because the rock's thermal symmetry, edge structure, and internal uniformity deviate from the distributions characteristic of mine casings.
+The results show that adding a statistical verification stage improves the precision of a deep learning detector while keeping recall above 90\%. The two stages operate on different information: YOLO uses full-image spatial context, while the RF uses ten physically interpretable features from each cropped region. When YOLO flags a sun-heated rock as a mine, the RF can reject it based on thermal symmetry, edge structure, and internal uniformity that differ from mine casings.
 
 \subsection{Class-Specific Behavior}
 
-The 65.3-point improvement on AP-Metal merits specific analysis. AP-Metal mines combine the two most challenging attributes: small physical size (low pixel count at 640$\times$640) and low thermal contrast (metal casings conduct heat rapidly, reducing the surface temperature differential). YOLO's feature hierarchy compresses spatial information progressively, and small objects lose discriminative detail in deeper layers. The handcrafted features, by contrast, are computed directly from the raw crop at full resolution; features such as circularity and RTS are scale-invariant and degrade gracefully with object size. This explains why the RF gate was disproportionately effective on the AP-Metal class compared to the larger classes.
+AP-Metal mines combine two challenging attributes: small size (low pixel count at 640$\times$640) and low thermal contrast (metal casings conduct heat rapidly). YOLO's feature hierarchy compresses spatial information progressively, and small objects lose detail in deeper layers. The handcrafted features are computed from the raw crop at full resolution; circularity and RTS are scale-invariant and degrade more gracefully with object size. This likely explains why the RF stage was more effective on AP-Metal than on larger classes.
 
 \subsection{Limitations}
 
-The pipeline has three limitations that merit acknowledgment. First, the feature extraction step assumes a minimum crop size of 3$\times$3 pixels; detections below this threshold are discarded, which may exclude sub-pixel mines at high UAS altitudes. Second, the background sampling strategy generates negative examples from random non-overlapping regions within the same thermal frame, which may create an unrealistic distribution relative to the operational environment where clutter patterns differ systematically. Third, the current system does not incorporate temporal information across video frames; in practice, a UAS captures image sequences, and spatio-temporal consistency could further reduce false alarms.
+The pipeline has several limitations that merit acknowledgment. First, all experiments were conducted on the AMLID dataset only; cross-domain validation on external LWIR mine datasets is needed to test generalization beyond the specific capture conditions (soil type, climate, sensor) of AMLID. Second, the comparison with the AMLID baseline~\cite{gallagher2025} is approximate because the published per-class metrics are Precision@50 while our system reports mAP@50; a controlled re-implementation of the baseline under identical evaluation protocols would be needed for a rigorous benchmark. Third, the feature extraction step assumes a minimum crop size of 3$\times$3 pixels; detections below this threshold are discarded, which may exclude sub-pixel mines at high UAS altitudes. Fourth, the background sampling strategy generates negative examples from random non-overlapping regions within the same thermal frame, which may not fully represent operational clutter patterns. Fifth, the current system does not incorporate temporal information across video frames; in practice, a UAS captures image sequences, and spatio-temporal consistency could further reduce false alarms. Finally, no systematic comparison with other detector architectures (YOLOv8, YOLOv11, RT-DETR) was performed, as the focus of this work is the hybrid pipeline design rather than detector benchmarking.
 
 \subsection{Generalization to Other Modalities and Sensor Fusion}
 
-The feature set was designed specifically for LWIR thermal imagery, but several features --- particularly circularity, aspect ratio, and hole count --- are modality-agnostic and could be applied to GPR, electromagnetic induction, or visible-spectrum data. Extending the pipeline to fuse multi-modal features (e.g., combining thermal contrast from LWIR with subsurface scattering from GPR) is a natural direction for future work.
+The feature set was designed for LWIR thermal imagery, but several features (circularity, aspect ratio, hole count) are modality-agnostic and could transfer to GPR, electromagnetic induction, or visible-spectrum data. Extending the pipeline to fuse multi-modal features is a direction for future work.
+
+\subsection{Ethical Considerations}
+
+Landmine detection technology carries dual-use implications. The authors' intent is strictly humanitarian: to support demining operations in post-conflict regions where landmines remain a persistent threat to civilian populations. The AMLID dataset used in this work contains only mine simulants, not live ordnance. Any deployment of automated detection systems for humanitarian demining must involve human-in-the-loop verification and comply with relevant international treaties including the Ottawa Treaty (Mine Ban Convention).
 
 \section{Conclusion}
 
-This paper presented a dual-stage hybrid pipeline for aerial landmine detection that combines the spatial localization capability of YOLO26 with the physical interpretability of a Random Forest classifier operating on ten handcrafted thermal and geometric features. The system achieves 91.9\% mAP@50 on the AMLID benchmark, a 5.1-point improvement over the published baseline, with the AP-Metal class improving by 65.3 points. The Random Forest verification gate reduces false positives by 31.7\% while maintaining 90.86\% recall, demonstrating that statistical verification of deep learning proposals produces a system that is both more precise and more reliable than either paradigm in isolation. At 20.3 MB and 204 FPS, the pipeline can be deployed on edge hardware for real-time UAS-based humanitarian demining operations.
+This paper presented a dual-stage hybrid pipeline for aerial landmine detection that combines the spatial localization capability of YOLO26 with the physical interpretability of a Random Forest classifier operating on ten handcrafted thermal and geometric features. The system achieves 91.9\% mAP@50 on the AMLID benchmark (86.8\% mAP@50 for the YOLOv8 baseline~\cite{gallagher2025}), with the AP-Metal class reaching 84.6\% mAP@50. The Random Forest verification gate reduces false positives by 31.7\% while maintaining 90.86\% recall, demonstrating that statistical verification of deep learning proposals produces a system that is both more precise and more reliable than either paradigm in isolation. At 20.3 MB and 204 FPS, the pipeline supports low-latency inference on edge hardware, demonstrating practical computational feasibility for UAS-based deployment.
 
 \section*{Author Contributions}
 
@@ -452,7 +452,7 @@ H.S.A. conceived the dual-stage architecture, implemented the YOLO26 training pi
 
 The authors thank Assoc. Prof. Mustafa Cem Kasapba\c{s}{\i} (Department of Computer Engineering, Beykoz University) for his supervision of the CME6102 Estimation and Prediction course. The AMLID dataset used in this research was created by Gallagher and Oughton~\cite{gallagher2025} and is publicly available via Zenodo.
 
-\begin{thebibliography}{6}
+\begin{thebibliography}{15}
 
 \bibitem{icbl2024}
 International Campaign to Ban Landmines, \emph{Landmine Monitor 2024}. Geneva, Switzerland: ICBL, 2024.
@@ -461,16 +461,43 @@ International Campaign to Ban Landmines, \emph{Landmine Monitor 2024}. Geneva, S
 J.~E. McFee and A.~A. Faust, ``Detection of buried landmines using thermal infrared imaging,'' \emph{Proc. SPIE}, vol.~3710, pp.~567--578, 1999.
 
 \bibitem{lopez2004}
-P.~Lopez, D.~R.~Van~Staveren, and M.~Janssen, ``Thermal contrast measurements of buried landmines in different soil types,'' \emph{IEEE Trans. Geosci. Remote Sens.}, vol.~42, no.~9, pp.~1956--1964, Sep.~2004.
+P.~L\'{o}pez, L.~van~Kempen, H.~Sahli, and D.~C.~Ferrer, ``Improved thermal analysis of buried landmines,'' \emph{IEEE Trans. Geosci. Remote Sens.}, vol.~42, no.~9, pp.~1965--1975, Sep.~2004.
+
+\bibitem{cremer2002}
+W.~A.~C.~M.~Messelink, K.~Schutte, A.~M.~Vossepoel, F.~Cremer, J.~G.~M.~Schavemaker, and E.~den~Breejen, ``Feature-based detection of land mines in infrared images,'' in \emph{Proc. SPIE Detection and Remediation Technologies for Mines and Minelike Targets VII}, vol.~4742, pp.~108--118, 2002.
 
 \bibitem{gallagher2025}
 J.~E. Gallagher and E.~J. Oughton, ``AMLID: An Adaptive Multispectral Landmine Identification Dataset for Drone-Based Detection,'' arXiv preprint arXiv:2512.18738, 2025.
 
 \bibitem{redmon2016}
-J.~Redmon, S.~Divvala, R.~Girshick, and A.~Farhadi, ``You only look once: Unified, real-time object detection,'' in \emph{IEEE Conf. Comput. Vis. Pattern Recognit.}, 2016, pp.~779--788.
+J.~Redmon, S.~Divvala, R.~Girshick, and A.~Farhadi, ``You only look once: Unified, real-time object detection,'' in \emph{IEEE Conf. Comput. Vis. Pattern Recognit. (CVPR)}, 2016, pp.~779--788.
+
+\bibitem{jocher2023yolov8}
+G.~Jocher, A.~Chaurasia, and J.~Qiu, ``Ultralytics YOLOv8,'' 2023. [Online]. Available: \texttt{https://github.com/ultralytics/ultralytics}
 
 \bibitem{jocher2026yolo26}
-G.~Jocher, J.~Qiu, M.~Liu, S.~Lyu, F.~C.~Akyon, and M.~E.~Kalfaoglu, ``Ultralytics YOLO26: Unified Real-Time End-to-End Vision Models,'' 2026, arXiv:2606.03748.
+G.~Jocher, J.~Qiu, M.~Liu, S.~Lyu, F.~C.~Akyon, and M.~E.~Kalfaoglu, ``Ultralytics YOLO26: Unified Real-Time End-to-End Vision Models,'' arXiv preprint arXiv:2606.03748, 2026.
+
+\bibitem{liu2016}
+W.~Liu, D.~Anguelov, D.~Erhan, C.~Szegedy, S.~Reed, C.-Y.~Fu, and A.~C.~Berg, ``SSD: Single Shot MultiBox Detector,'' in \emph{European Conf. Comput. Vis. (ECCV)}, 2016, pp.~21--37.
+
+\bibitem{carion2020}
+N.~Carion, F.~Massa, G.~Synnaeve, N.~Usunier, A.~Kirillov, and S.~Zagoruyko, ``End-to-End Object Detection with Transformers,'' in \emph{European Conf. Comput. Vis. (ECCV)}, 2020, pp.~213--229.
+
+\bibitem{breiman2001}
+L.~Breiman, ``Random Forests,'' \emph{Machine Learning}, vol.~45, no.~1, pp.~5--32, 2001.
+
+\bibitem{bajic2023}
+M.~Baji\'{c} and B.~Poto\v{c}nik, ``UAV Thermal Imaging for Unexploded Ordnance Detection by Using Deep Learning,'' \emph{Remote Sensing}, vol.~15, no.~4, p.~967, 2023.
+
+\bibitem{qiu2023}
+Z.~Qiu, H.~Guo, J.~Hu, H.~Jiang, and C.~Luo, ``Joint Fusion and Detection via Deep Learning in UAV-Borne Multispectral Sensing of Scatterable Landmine,'' \emph{Sensors}, vol.~23, no.~12, p.~5693, 2023.
+
+\bibitem{howard2017}
+A.~G.~Howard, M.~Zhu, B.~Chen, D.~Kalenichenko, W.~Wang, T.~Weyand, M.~Andreetto, and H.~Adam, ``MobileNets: Efficient Convolutional Neural Networks for Mobile Vision Applications,'' arXiv preprint arXiv:1704.04861, 2017.
+
+\bibitem{sze2017}
+V.~Sze, Y.-H.~Chen, T.-J.~Yang, and J.~S.~Emer, ``Efficient Processing of Deep Neural Networks: A Tutorial and Survey,'' \emph{Proc. IEEE}, vol.~105, no.~12, pp.~2295--2329, 2017.
 
 \end{thebibliography}
 
