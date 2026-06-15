@@ -34,3 +34,14 @@ nextjs-app/.env.test.local
 # random_forest_model.pkl is too large for GitHub (>100MB)
 outputs/random_forest_model.pkl
 docs/ref_images
+
+# LaTeX build artifacts
+*.aux
+*.log
+*.out
+*.toc
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.synctex.gz
